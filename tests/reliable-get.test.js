@@ -11,7 +11,7 @@ describe("Core caching", function() {
       var rc = ReliableGet(config);
       rc({url:'http://www.google.com'}, function(err, response) {
           done();
-      });
+      })
 
   });
 

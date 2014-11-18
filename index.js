@@ -21,7 +21,7 @@ function createClient(config) {
             return (res.headers['cache-control'] || '').indexOf(value) !== -1;
         };
 
-        options.headers = options.headers || {};
+        options.headers = options.headers || config.headers || {};
 
         function pipeAndCacheContent(next) {
 
@@ -40,7 +40,7 @@ function createClient(config) {
 
             if(!url.parse(options.url).protocol) { return handleError({message:'Invalid URL ' + options.url}); }
 
-            options.headers.accept = 'text/html,application/xhtml+xml,application/xml,application/json';
+            options.headers.accept = options.headers.accept || 'text/html,application/xhtml+xml,application/xml,application/json';
             options.headers['user-agent'] = 'Reliable-Get-Request-Agent';
 
             request({url: options.url, agent: false, timeout: options.timeout, headers: options.headers})
