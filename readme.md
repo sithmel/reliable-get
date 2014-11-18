@@ -1,5 +1,3 @@
-HTML transformation library built on top of htmlparser2, used by Compoxure.
+Reliable HTTP get wrapper (cache and circuit breaker), best wrapped around things you dont trust very much.
 
-See tests for example usage until we get around to writing a better readme.
-
-[![Build Status](https://travis-ci.org/tes/parxer.svg)](https://travis-ci.org/tes/parxer)
+[![Build Status](https://travis-ci.org/tes/reliable-get.svg)](https://travis-ci.org/tes/reliable-get)
