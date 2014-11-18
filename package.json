@@ -27,6 +27,7 @@
     "blanket": "^1.1.6",
     "body-parser": "^1.6.7",
     "circuit-breaker-js": "0.0.1",
+    "connect-route": "^0.1.4",
     "hogan.js": "^3.0.2",
     "html-entities": "^1.1.1",
     "htmlparser2": "^3.7.3",

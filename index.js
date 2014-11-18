@@ -88,7 +88,10 @@ function createClient(config) {
 
                 new CircuitBreaker(options, config, eventHandler, pipeAndCacheContent, function(err, res) {
 
-                    if (err) { return next(err, {stale: oldCacheData}); }
+                    if (err) {
+                        var staleContent = oldCacheData ? {stale: oldCacheData} : undefined;
+                        return next(err, staleContent);
+                    }
 
                     // Honor fragment cache control headers in a simplistic way
                     if (hasCacheControl(res, 'no-cache') || hasCacheControl(res, 'no-store')) {
@@ -109,8 +112,11 @@ function createClient(config) {
             });
 
         } else {
+
             new CircuitBreaker(options, config, eventHandler, pipeAndCacheContent, function(err, res) {
                 if (err) { return next(err); }
+                // Force no store
+                res.headers['cache-control'] = 'no-store';
                 next(null, {content: res.content, headers: res.headers});
             });
 
