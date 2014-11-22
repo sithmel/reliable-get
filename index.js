@@ -3,27 +3,29 @@
 var request = require('request');
 var sf = require('sf');
 var url = require('url');
+var util = require('util');
+var utils = require('./lib/utils');
+var EventEmitter = require('events').EventEmitter;
 var CircuitBreaker = require('./lib/CircuitBreaker');
 var CacheFactory = require('./lib/cache/cacheFactory');
 
-function createClient(config) {
+function ReliableGet(config) {
 
-    var cache = CacheFactory.getCache(config.cache),
-        eventHandler = config.eventHandler || {
-            logger: function() {},
-            stats: function() {}
-        };
+    this.get = function(options, next) {
 
-    return function(options, next) {
+        var self = this,
+            start = Date.now(),
+            cache = CacheFactory.getCache(config.cache),
+            hasCacheControl = function(res, value) {
+                if (typeof value === 'undefined') { return res.headers['cache-control']; }
+                return (res.headers['cache-control'] || '').indexOf(value) !== -1;
+            };
 
-        var start = Date.now(), hasCacheControl = function(res, value) {
-            if (typeof value === 'undefined') { return res.headers['cache-control']; }
-            return (res.headers['cache-control'] || '').indexOf(value) !== -1;
-        };
-
+        // Defaults
         options.headers = options.headers || config.headers || {};
+        if(!options.cacheKey) { options.cacheKey = utils.urlToCacheKey(options.url); }
 
-        function pipeAndCacheContent(next) {
+        var pipeAndCacheContent = function(cb) {
 
             var content = '', start = Date.now(), inErrorState = false, res;
 
@@ -34,7 +36,8 @@ function createClient(config) {
                         url: options.url,
                         errorMessage: err.message
                     });
-                    next({statusCode: statusCode, message: message});
+                    self.emit('stat', 'error', 'FAIL ' + message, {tracer:options.tracer, statusCode: statusCode, type:options.type});
+                    cb({statusCode: statusCode || 500, message: message});
                 }
             }
 
@@ -57,10 +60,10 @@ function createClient(config) {
                 .on('end', function() {
                     if(inErrorState) { return; }
                     res.content = content;
-                    next(null, res);
+                    cb(null, res);
                     var timing = Date.now() - start;
-                    eventHandler.logger('debug', 'OK ' + options.url,{tracer:options.tracer, responseTime: timing, pcType:options.type});
-                    eventHandler.stats('timing', options.statsdKey + '.responseTime', timing);
+                    self.emit('log', 'debug', 'OK ' + options.url, {tracer:options.tracer, responseTime: timing, type:options.type});
+                    self.emit('stat', 'timing', options.statsdKey + '.responseTime', timing);
                 });
 
         }
@@ -72,21 +75,21 @@ function createClient(config) {
                 if (err) { return next(err, {stale: oldCacheData}); }
                 if (cacheData && cacheData.content) {
                     var timing = Date.now() - start;
-                    eventHandler.logger('debug', 'CACHE HIT for key: ' + options.cacheKey,{tracer:options.tracer, responseTime: timing, pcType:options.type});
-                    eventHandler.stats('increment', options.statsdKey + '.cacheHit');
-                    next(null, {content: cacheData.content, headers: cacheData.headers});
+                    self.emit('log','debug', 'CACHE HIT for key: ' + options.cacheKey,{tracer:options.tracer, responseTime: timing, type:options.type});
+                    self.emit('stat', 'increment', options.statsdKey + '.cacheHit');
+                    next(null, {statusCode: 200, content: cacheData.content, headers: cacheData.headers});
                     return;
                 }
 
-                eventHandler.logger('debug', 'CACHE MISS for key: ' + options.cacheKey,{tracer:options.tracer,pcType:options.type});
-                eventHandler.stats('increment', options.statsdKey + '.cacheMiss');
+                self.emit('log', 'debug', 'CACHE MISS for key: ' + options.cacheKey,{tracer:options.tracer, type:options.type});
+                self.emit('stat', 'increment', options.statsdKey + '.cacheMiss');
 
                 if(options.url == 'cache') {
                     next(null, {});
                     return;
                 }
 
-                new CircuitBreaker(options, config, eventHandler, pipeAndCacheContent, function(err, res) {
+                new CircuitBreaker(self, options, config, pipeAndCacheContent, function(err, res) {
 
                     if (err) {
                         var staleContent = oldCacheData ? {stale: oldCacheData} : undefined;
@@ -94,17 +97,16 @@ function createClient(config) {
                     }
 
                     if (hasCacheControl(res, 'no-cache') || hasCacheControl(res, 'no-store')) {
-                        next(null, {content: res.content, headers: res.headers});
+                        next(null, {statusCode: 200, content: res.content, headers: res.headers});
                         return;
                     }
                     if (hasCacheControl(res, 'max-age')) {
                         options.cacheTTL = res.headers['cache-control'].split('=')[1] * 1000;
                     }
 
-                    next(null, {content: res.content, headers:res.headers});
-
                     cache.set(options.cacheKey, {content: res.content, headers: res.headers}, options.cacheTTL, function() {
-                        eventHandler.logger('debug', 'CACHE SET for key: ' + options.cacheKey + ' @ TTL: ' + options.cacheTTL,{tracer:options.tracer,pcType:options.type});
+                        next(null, {statusCode: 200, content: res.content, headers:res.headers});
+                        self.emit('log','debug', 'CACHE SET for key: ' + options.cacheKey + ' @ TTL: ' + options.cacheTTL,{tracer:options.tracer,type:options.type});
                     });
 
                 });
@@ -112,15 +114,18 @@ function createClient(config) {
 
         } else {
 
-            new CircuitBreaker(options, config, eventHandler, pipeAndCacheContent, function(err, res) {
+            new CircuitBreaker(self, options, config, pipeAndCacheContent, function(err, res) {
                 if (err) { return next(err); }
                 res.headers['cache-control'] = 'no-store';
-                next(null, {content: res.content, headers: res.headers});
+                next(null, {statusCode: res.statusCode, content: res.content, headers: res.headers});
             });
 
         }
+
     }
 
 }
 
-module.exports = createClient;
+util.inherits(ReliableGet, EventEmitter);
+
+module.exports = ReliableGet;

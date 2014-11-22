@@ -42,8 +42,47 @@ describe("Redis Cache Engine", function() {
         });
     });
 
+
+    it('should set and get values from cache', function(done) {
+        withCache({engine:'redis'}, function(err, cache) {
+            cache.set('bar:123', {content:'content', headers:{'header':'1'}}, 1000, function(err) {
+                expect(err).to.be(null);
+                assertCachedValue(cache, 'bar:123', 'content', function() {
+                    assertHeaderValue(cache, 'bar:123', 'header', '1', done);
+                });
+            });
+        });
+    });
+
     it('should bypass cache is redis is unavailable', function(done) {
         var cache = cacheFactory.getCache({engine:'redis', hostname: 'foobar.acuminous.co.uk'});
+        cache.get('anything', function(err, data) {
+            expect(err).to.be(undefined);
+            expect(data).to.be(undefined);
+            done();
+        });
+    });
+
+    it('should parse url structures with host, port and db', function(done) {
+        var cache = cacheFactory.getCache({engine:'redis', url: 'redis://localhost:6379?db=1'});
+        cache.get('anything', function(err, data) {
+            expect(err).to.be(undefined);
+            expect(data).to.be(undefined);
+            done();
+        });
+    });
+
+    it('should parse url structures with host and port', function(done) {
+        var cache = cacheFactory.getCache({engine:'redis', url: 'redis://localhost:6379'});
+        cache.get('anything', function(err, data) {
+            expect(err).to.be(undefined);
+            expect(data).to.be(undefined);
+            done();
+        });
+    });
+
+    it('should parse url structures with host', function(done) {
+        var cache = cacheFactory.getCache({engine:'redis', url: 'redis://localhost'});
         cache.get('anything', function(err, data) {
             expect(err).to.be(undefined);
             expect(data).to.be(undefined);
