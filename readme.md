@@ -1,6 +1,6 @@
 Reliable HTTP get wrapper (cache and circuit breaker), best wrapped around things you dont trust very much.
 
-[![Build Status](https://travis-ci.org/tes/reliable-get.svg)](https://travis-ci.org/tes/reliable-get)
+[![Build Status](https://travis-ci.org/tes/reliable-get.svg)](https://travis-ci.org/tes/reliable-get) http://img.shields.io/badge/Coverage-100%25-green.svg
 
 Example options from Compoxure backend request:
 
