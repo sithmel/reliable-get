@@ -41,7 +41,7 @@ function ReliableGet(config) {
                 }
             }
 
-            if(!url.parse(options.url).protocol) { return handleError({message:'Invalid URL ' + options.url}); }
+            if(!url.parse(options.url).protocol && options.url !== 'cache') { return handleError({message:'Invalid URL ' + options.url}); }
 
             options.headers.accept = options.headers.accept || 'text/html,application/xhtml+xml,application/xml,application/json';
             options.headers['user-agent'] = 'Reliable-Get-Request-Agent';
@@ -85,7 +85,7 @@ function ReliableGet(config) {
                 self.emit('stat', 'increment', options.statsdKey + '.cacheMiss');
 
                 if(options.url == 'cache') {
-                    next(null, {});
+                    next(null, {content: 'No content in cache at key: ' + options.cacheKey, statusCode: 404});
                     return;
                 }
 

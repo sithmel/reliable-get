@@ -23,6 +23,17 @@ describe("Redis Cache Engine", function() {
         });
 	});
 
+    it('should set and get values from cache without set callback', function(done) {
+        withCache({engine:'redis'}, function(err, cache) {
+            cache.set('bar:223', {content:'content', headers:{'header':'1'}}, 1000);
+            setTimeout(function() {
+                assertCachedValue(cache, 'bar:223', 'content', function() {
+                    assertHeaderValue(cache, 'bar:223', 'header', '1', done);
+                });
+            }, 200); // Long enough
+        });
+    });
+
     it('should return null when value not present', function(done) {
         withCache({engine:'redis'}, function(err, cache) {
             assertCachedNullValue(cache, 'bar:212122', done);
@@ -41,7 +52,6 @@ describe("Redis Cache Engine", function() {
             });
         });
     });
-
 
     it('should set and get values from cache', function(done) {
         withCache({engine:'redis'}, function(err, cache) {
@@ -87,6 +97,23 @@ describe("Redis Cache Engine", function() {
             expect(err).to.be(undefined);
             expect(data).to.be(undefined);
             done();
+        });
+    });
+
+    it('should fail silently if redis connection terminates', function(done) {
+        var cache = cacheFactory.getCache({engine:'redis', url: 'redis://localhost'});
+        cache.set('bar:125', {content:'content', headers:{'header':'1'}}, 1000, function(err) {
+            expect(err).to.be(undefined);
+            cache._redisClient.quit();
+            cache._redisClient.emit('error', {message:'Test Redis error message'});
+            setTimeout(function() {
+                cache.get('bar:125', function(err, data) {
+                    expect(err).to.be(undefined);
+                    expect(data).to.be(undefined);
+                    cacheFactory.clearCacheInstances(); // Set back into good state
+                    done();
+                });
+            }, 200);
         });
     });
 

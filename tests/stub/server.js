@@ -30,9 +30,21 @@ function initStubServer(port, next) {
         router.get('/', function(req, res) {
             res.end('OK');
         });
+
         router.get('/broken', function(req, res) {
             req.socket.end();
         });
+
+        router.get('/nocache', function(req, res) {
+            res.writeHead(200, {'cache-control': 'private, max-age=0, no-cache'});
+            res.end('' + Date.now());
+        });
+
+        router.get('/maxage', function(req, res) {
+            res.writeHead(200, {'cache-control': 'private, max-age=5000'});
+            res.end('' + Date.now());
+        });
+
         router.get('/faulty', faultyFn);
         router.get('/cb-faulty', faultyFn);
 
