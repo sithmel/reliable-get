@@ -4,6 +4,7 @@ var request = require('request');
 var sf = require('sf');
 var url = require('url');
 var util = require('util');
+var _ = require('lodash');
 var utils = require('./lib/utils');
 var EventEmitter = require('events').EventEmitter;
 var CircuitBreaker = require('./lib/CircuitBreaker');
@@ -101,7 +102,7 @@ function ReliableGet(config) {
                 new CircuitBreaker(self, options, config, pipeAndCacheContent, function(err, res) {
 
                     if (err) {
-                        var staleContent = oldCacheData ? {stale: oldCacheData} : undefined;
+                        var staleContent = oldCacheData ? _.extend(oldCacheData, {stale: true}) : undefined;
                         return next(err, staleContent);
                     }
 

@@ -125,7 +125,8 @@ describe("Reliable Get", function() {
           setTimeout(function() {
             rg.get({url:'http://localhost:5001/faulty?faulty=true', cacheKey: 'memory-faulty-3', cacheTTL: 200}, function(err, response) {
               expect(err.statusCode).to.be(500);
-              expect(response.stale.content).to.be('Faulty service managed to serve good content!');
+              expect(response.content).to.be('Faulty service managed to serve good content!');
+              expect(response.stale).to.be(true);
               done();
             });
           }, 500);
@@ -223,7 +224,8 @@ describe("Reliable Get", function() {
           setTimeout(function() {
             rg.get({url:'http://localhost:5001/faulty?faulty=true', cacheKey: 'redis-faulty-3', cacheTTL: 200}, function(err, response) {
               expect(err.statusCode).to.be(500);
-              expect(response.stale.content).to.be('Faulty service managed to serve good content!');
+              expect(response.content).to.be('Faulty service managed to serve good content!');
+              expect(response.stale).to.be(true);
               done();
             });
           }, 500);
