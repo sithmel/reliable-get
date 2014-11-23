@@ -23,7 +23,8 @@ function ReliableGet(config) {
 
         // Defaults
         options.headers = options.headers || config.headers || {};
-        if(!options.cacheKey) { options.cacheKey = utils.urlToCacheKey(options.url); }
+        options.cacheKey = options.cacheKey || utils.urlToCacheKey(options.url);
+        options.cacheTTL = options.hasOwnProperty('cacheTTL') ? options.cacheTTL : 60000;
 
         var pipeAndCacheContent = function(cb) {
 
