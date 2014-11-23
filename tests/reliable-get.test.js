@@ -55,6 +55,30 @@ describe("Reliable Get", function() {
       });
   });
 
+  it('NO CACHE: should just request service if cache get fails', function(done) {
+      var config = {cache:{engine:'nocache'}};
+      var rg = new ReliableGet(config);
+      rg.get({url:'http://localhost:5001/faulty?faulty=false', cacheKey:'__error__'}, function(err, response) {
+          expect(err).to.be(null);
+          expect(response.statusCode).to.be(200);
+          done();
+      });
+  });
+
+  it('MEMORY CACHE: should initialise with caching on with simple defaults if none provided', function(done) {
+      var config = {cache:{engine:'memorycache'}};
+      var rg = new ReliableGet(config);
+      rg.get({url:'http://localhost:5001/faulty?faulty=false'}, function(err, response) {
+          expect(err).to.be(null);
+          expect(response.statusCode).to.be(200);
+          rg.get({url:'http://localhost:5001/faulty?faulty=false'}, function(err, response) {
+            expect(err).to.be(null);
+            expect(response.statusCode).to.be(200);
+            done();
+          });
+      });
+  });
+
   it('MEMORY CACHE: should serve from cache after initial request', function(done) {
       var config = {cache:{engine:'memorycache'}};
       var rg = new ReliableGet(config);
@@ -201,6 +225,8 @@ describe("Reliable Get", function() {
 
       this.timeout(20000);
 
+      process.stdout.write("\nCircuit breaker slow test: ");
+
       var config = {cache:{engine:'memorycache'},
         'circuitbreaker':{
             'windowDuration':5000,
@@ -227,6 +253,7 @@ describe("Reliable Get", function() {
       }, function(next) {
         rg.get({url:'http://localhost:5001/cb-faulty?faulty=true', cacheKey: 'circuit-breaker', explicitNoCache: true}, function(err, response) {
           expect(err.statusCode).to.be(500);
+          process.stdout.write(".");
           next();
         });
       }, function() {
@@ -235,6 +262,7 @@ describe("Reliable Get", function() {
               return cbOpen;
             }, function(next) {
               rg.get({url:'http://localhost:5001/cb-faulty?faulty=false', cacheKey: 'circuit-breaker', explicitNoCache: true}, function(err, response) {
+                process.stdout.write(".");
                 setTimeout(next, 500);
               });
             }, function() {
@@ -243,6 +271,40 @@ describe("Reliable Get", function() {
           );
         }, 5000);
       });
+  });
+
+  it('CIRCUIT BREAKER: should invoke circuit breaker with sensible defaults', function(done) {
+
+      this.timeout(20000);
+
+      process.stdout.write("\nCircuit breaker slow test: ");
+
+      var config = {cache:{engine:'memorycache'},
+        'circuitbreaker':{
+            'includePath': true
+        }
+      };
+      var rg = new ReliableGet(config);
+      var cbOpen = false;
+
+      rg.on('log', function(level, message) {
+        if(_.contains(message, 'CIRCUIT BREAKER OPEN for host')) {
+          cbOpen = true;
+        }
+        if(_.contains(message, 'CIRCUIT BREAKER CLOSED for host')) {
+          cbOpen = false;
+        }
+      });
+
+      async.whilst(function() {
+        return !cbOpen;
+      }, function(next) {
+        rg.get({url:'http://localhost:5001/cb-faulty-default?faulty=true', cacheKey: 'circuit-breaker-defaults', explicitNoCache: true}, function(err, response) {
+          expect(err.statusCode).to.be(500);
+          process.stdout.write(".");
+          next();
+        });
+      }, done);
   });
 
 });

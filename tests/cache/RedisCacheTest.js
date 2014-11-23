@@ -117,6 +117,24 @@ describe("Redis Cache Engine", function() {
         });
     });
 
+    it('should allow set without a callback', function(done) {
+        withCache({engine:'redis'}, function(err, cache) {
+            cache.set('bar:123456', {content:'content'}, 1000);
+            setTimeout(function() {
+                assertCachedValue(cache, 'bar:123456', 'content', done);
+            }, 100);
+        });
+    });
+
+    it('should default the ttl if not specified', function(done) {
+        withCache({engine:'redis'}, function(err, cache) {
+            cache.set('bar:1234577', {content:'content'});
+            setTimeout(function() {
+                assertCachedValue(cache, 'bar:1234577', 'content', done);
+            }, 100);
+        });
+    });
+
     function withCache(config, next) {
         var cache = cacheFactory.getCache(config);
         cache.on('ready', function() {

@@ -31,6 +31,20 @@ describe("Memory Cache Engine", function(){
         });
     });
 
+    it('should allow set without a callback', function(done) {
+        cache.set('bar:12345', {content:'content'}, 1000);
+        setTimeout(function() {
+            assertCachedValue(cache, 'bar:12345', 'content', done);
+        }, 100);
+    });
+
+    it('should default the ttl if not specified', function(done) {
+        cache.set('bar:12345', {content:'content'});
+        setTimeout(function() {
+            assertCachedValue(cache, 'bar:12345', 'content', done);
+        }, 100);
+    });
+
     function assertCachedValue(cache, key, expected, next) {
         cache.get(key, function(err, actual) {
             expect(err).to.be(null);

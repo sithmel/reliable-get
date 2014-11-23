@@ -17,7 +17,6 @@ function ReliableGet(config) {
             start = Date.now(),
             cache = CacheFactory.getCache(config.cache),
             hasCacheControl = function(res, value) {
-                if (typeof value === 'undefined') { return res.headers['cache-control']; }
                 return (res.headers['cache-control'] || '').indexOf(value) !== -1;
             };
 
@@ -69,11 +68,19 @@ function ReliableGet(config) {
 
         }
 
+        var getWithNoCache = function() {
+            new CircuitBreaker(self, options, config, pipeAndCacheContent, function(err, res) {
+                if (err) { return next(err); }
+                res.headers['cache-control'] = 'no-store';
+                next(null, {statusCode: res.statusCode, content: res.content, headers: res.headers});
+            });
+        }
+
         if(!options.explicitNoCache && options.cacheTTL > 0) {
 
             cache.get(options.cacheKey, function(err, cacheData, oldCacheData) {
 
-                if (err) { return next(err, {stale: oldCacheData}); }
+                if (err) { return getWithNoCache(); }
                 if (cacheData && cacheData.content) {
                     var timing = Date.now() - start;
                     self.emit('log','debug', 'CACHE HIT for key: ' + options.cacheKey,{tracer:options.tracer, responseTime: timing, type:options.type});
@@ -105,7 +112,7 @@ function ReliableGet(config) {
                         options.cacheTTL = res.headers['cache-control'].split('=')[1] * 1000;
                     }
 
-                    cache.set(options.cacheKey, {content: res.content, headers: res.headers}, options.cacheTTL, function() {
+                    cache.set(options.cacheKey, {content: res.content, headers: res.headers, options: options}, options.cacheTTL, function() {
                         next(null, {statusCode: 200, content: res.content, headers:res.headers});
                         self.emit('log','debug', 'CACHE SET for key: ' + options.cacheKey + ' @ TTL: ' + options.cacheTTL,{tracer:options.tracer,type:options.type});
                     });
@@ -115,11 +122,7 @@ function ReliableGet(config) {
 
         } else {
 
-            new CircuitBreaker(self, options, config, pipeAndCacheContent, function(err, res) {
-                if (err) { return next(err); }
-                res.headers['cache-control'] = 'no-store';
-                next(null, {statusCode: res.statusCode, content: res.content, headers: res.headers});
-            });
+            getWithNoCache();
 
         }
 

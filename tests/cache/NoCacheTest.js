@@ -31,6 +31,22 @@ describe("No Cache Engine", function() {
         });
     });
 
+     it('should default to nocache if no cache engine specified', function(done) {
+        cacheFactory.clearCacheInstances();
+        cache = cacheFactory.getCache({bob:'smith'});
+        cache.set('bar:123', 'content', 1000, function(err) {
+            expect(err).to.be(null);
+            assertCachedValue(cache, 'bar:123', null, done);
+        });
+    });
+
+    it('should allow set with no callback', function(done) {
+        cacheFactory.clearCacheInstances();
+        cache = cacheFactory.getCache();
+        cache.set('bar:123', 'content', 1000);
+        done();
+    });
+
     function assertCachedValue(cache, key, expected, next) {
         cache.get(key, function(err, actual) {
             expect(err).to.be(null);

@@ -24,7 +24,7 @@ function initStubServer(port, next) {
                     res.writeHead(500, {'Content-Type': 'text/html'});
                     res.end('Faulty service broken');
                 }
-            },100);
+            }, 100);
         }
 
         router.get('/', function(req, res) {
@@ -47,6 +47,7 @@ function initStubServer(port, next) {
 
         router.get('/faulty', faultyFn);
         router.get('/cb-faulty', faultyFn);
+        router.get('/cb-faulty-default', faultyFn);
 
     }));
 

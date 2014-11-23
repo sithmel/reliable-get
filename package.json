@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "lint": "jshint .",
-    "test": "istanbul cover _mocha -- -R spec tests/* && istanbul check-coverage"
+    "test": "istanbul cover _mocha -- -R spec tests/* && istanbul check-coverage -t 100"
   },
   "repository": {
     "type": "git",
