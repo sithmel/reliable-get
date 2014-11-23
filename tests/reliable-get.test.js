@@ -65,6 +65,15 @@ describe("Reliable Get", function() {
       });
   });
 
+  it('NO CACHE: should fail if timeout exceeded', function(done) {
+      var config = {cache:{engine:'nocache'}};
+      var rg = new ReliableGet(config);
+      rg.get({url:'http://localhost:5001/faulty?faulty=false', timeout: 5}, function(err, response) {
+          expect(err.statusCode).to.be(500);
+          done();
+      });
+  });
+
   it('MEMORY CACHE: should initialise with caching on with simple defaults if none provided', function(done) {
       var config = {cache:{engine:'memorycache'}};
       var rg = new ReliableGet(config);

@@ -24,6 +24,7 @@ function ReliableGet(config) {
         options.headers = options.headers || config.headers || {};
         options.cacheKey = options.cacheKey || utils.urlToCacheKey(options.url);
         options.cacheTTL = options.hasOwnProperty('cacheTTL') ? options.cacheTTL : 60000;
+        options.timeout = options.hasOwnProperty('timeout') ? options.timeout : 5000;
 
         var pipeAndCacheContent = function(cb) {
 
