@@ -2,7 +2,24 @@ Reliable HTTP get wrapper (cache and circuit breaker), best wrapped around thing
 
 [![Build Status](https://travis-ci.org/tes/reliable-get.svg)](https://travis-ci.org/tes/reliable-get) ![Coverage Status](http://img.shields.io/badge/Coverage-100%25-green.svg)
 
-Example options from Compoxure backend request:
+Basic usage
+=============
+
+```
+var ReliableGet = require('reliable-get');
+var rg = new ReliableGet(config);
+rg.on('log', function(level, message, data) {
+  // Wire up to your favourite logger
+});
+rg.on('stat', function(type, key, value) {
+ // Wire up to your favourite stats library (e.g. statsd)
+});
+rg.get({url:'http://www.google.com'}, function(err, response) {
+   console.log(response.content);
+});
+```
+
+## Example options from Compoxure backend request:
 
 ```
 var options = {
@@ -12,9 +29,8 @@ var options = {
           timeout: utils.timeToMillis(backend.timeout || DEFAULT_LOW_TIMEOUT),
           headers: backendHeaders,
           tracer: req.tracer,
-          statsdKey: 'backend_' + utils.urlToCacheKey(host),
-          eventHandler: eventHandler
-        };
+          statsdKey: 'backend_' + utils.urlToCacheKey(host)
+};
 ```
 
 From compoxure fragment request:
@@ -28,8 +44,7 @@ var options = {
       explicitNoCache: explicitNoCache,
       headers: optionsHeaders,
       tracer: req.tracer,
-      statsdKey: statsdKey,
-      eventHandler: eventHandler
+      statsdKey: statsdKey
   }
 ```
 
@@ -46,17 +61,4 @@ type|Type of request, used for statsd and logging||No
 statsdKey|Key that statsd events will be posted to||No
 eventHandler|Object (see below) for logging and stats||No
 
-Event Handler
-=============
-
-To allow Reliable Get to report back on status, at the moment we require you to pass in a simple object:
-
-```
-var eventHandler = {
-  logger: function(level, message, data) {},
-  stats: function(type, key, value) {}
-}
-```
-
-This will likely get replaced with a more standard EventEmitter at some point when we get around to it (this is a legacy of the extraction of this code from another project for now).
 
