@@ -64,6 +64,24 @@ describe("Redis Cache Engine", function() {
         });
     });
 
+
+    it('should bypass cache when headers or options are unparsable', function(done) {
+        withCache({engine:'redis'}, function(err, cache) {
+            var multi = cache._redisClient.multi();
+            multi.hset('bar:123', 'content', 'content');
+            multi.hset('bar:123', 'headers', 'undefined');
+            multi.hset('bar:123', 'options', 'undefined');
+            multi.expire('bar:123', 10);
+            multi.exec(function(err) {
+                cache.get('bar:123', function(err, data) {
+                    expect(err).to.be(undefined);
+                    expect(data).to.be(undefined);
+                    done()
+                })
+            });
+        });
+    });
+
     it('should bypass cache is redis is unavailable', function(done) {
         var cache = cacheFactory.getCache({engine:'redis', hostname: 'foobar.acuminous.co.uk'});
         cache.get('anything', function(err, data) {
