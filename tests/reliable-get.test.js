@@ -74,6 +74,27 @@ describe("Reliable Get", function() {
       });
   });
 
+ it('NO CACHE: should follow a redirect by default', function(done) {
+      var config = {cache:{engine:'nocache'}};
+      var rg = new ReliableGet(config);
+      rg.get({url:'http://localhost:5001/302', timeout: 5}, function(err, response) {
+          expect(err).to.be(null);
+          expect(response.statusCode).to.be(200);
+          expect(response.content).to.be("OK");
+          done();
+      });
+  });
+
+ it('NO CACHE: should not follow a redirect if configured not to', function(done) {
+      var config = {cache:{engine:'nocache'}, followRedirect: false};
+      var rg = new ReliableGet(config);
+      rg.get({url:'http://localhost:5001/302', timeout: 5}, function(err, response) {
+          expect(err.statusCode).to.be(302);
+          expect(err.headers.location).to.be('/');
+          done();
+      });
+  });
+
   it('MEMORY CACHE: should initialise with caching on with simple defaults if none provided', function(done) {
       var config = {cache:{engine:'memorycache'}};
       var rg = new ReliableGet(config);

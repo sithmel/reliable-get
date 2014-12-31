@@ -45,6 +45,11 @@ function initStubServer(port, next) {
             res.end('' + Date.now());
         });
 
+        router.get('/302', function(req, res) {
+           res.writeHead(302, {'location': '/'});
+           res.end('');
+        })
+
         router.get('/faulty', faultyFn);
         router.get('/cb-faulty', faultyFn);
         router.get('/cb-faulty-default', faultyFn);

@@ -31,7 +31,7 @@ function ReliableGet(config) {
 
             var content = '', start = Date.now(), inErrorState = false, res;
 
-            function handleError(err, statusCode) {
+            function handleError(err, statusCode, headers) {
                 if (!inErrorState) {
                     inErrorState = true;
                     var message = sf('Service {url} FAILED due to {errorMessage}', {
@@ -39,7 +39,7 @@ function ReliableGet(config) {
                         errorMessage: err.message
                     });
                     self.emit('stat', 'error', 'FAIL ' + message, {tracer:options.tracer, statusCode: statusCode, type:options.type});
-                    cb({statusCode: statusCode || 500, message: message});
+                    cb({statusCode: statusCode || 500, message: message, headers: headers});
                 }
             }
 
@@ -48,7 +48,9 @@ function ReliableGet(config) {
             options.headers.accept = options.headers.accept || 'text/html,application/xhtml+xml,application/xml,application/json';
             options.headers['user-agent'] = 'Reliable-Get-Request-Agent';
 
-            request({url: options.url, agent: false, timeout: options.timeout, headers: options.headers})
+            var followRedirect = config.followRedirect !== false; // falsey value
+
+            request({url: options.url, agent: false, timeout: options.timeout, headers: options.headers, followRedirect: followRedirect })
                 .on('error', handleError)
                 .on('data', function(data) {
                     content += data.toString();
@@ -56,7 +58,7 @@ function ReliableGet(config) {
                 .on('response', function(response) {
                     res = response;
                     if(response.statusCode != 200) {
-                        handleError({message:'status code ' + response.statusCode}, response.statusCode);
+                        handleError({message:'status code ' + response.statusCode}, response.statusCode, response.headers);
                     }
                 })
                 .on('end', function() {
