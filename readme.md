@@ -5,7 +5,7 @@ Reliable HTTP get wrapper (cache and circuit breaker), best wrapped around thing
 Basic usage
 =============
 
-```
+```js
 var ReliableGet = require('reliable-get');
 var config = {
   cache:{
@@ -31,7 +31,7 @@ rg.get({url:'http://www.google.com'}, function(err, response) {
 
 When you create an instance of reliable-get you need to specify the cache and circuit breaker behaviour.  This then applies across all requests.
 
-```
+```js
 var config = {
   cache:{
     engine:'redis',
@@ -62,7 +62,7 @@ To disable the circuit breaker, simply delete the circuitbreaker configuration.
 
 When making a get request, you need to provide a basic options object:
 
-```
+```js
 rg.get({url:'http://www.google.com'}, function(err, response) {
    console.log(response.content);
 });
@@ -83,7 +83,7 @@ eventHandler|Object (see below) for logging and stats||No
 
 Example from Compoxure backend request:
 
-```
+```js
 var options = {
           url: targetUrl,
           cacheKey: targetCacheKey,
@@ -97,7 +97,7 @@ var options = {
 
 From compoxure fragment request:
 
-```
+```js
 var options = {
       url: url,
       timeout: timeout,
