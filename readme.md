@@ -81,7 +81,7 @@ type|Type of request, used for statsd and logging||No
 statsdKey|Key that statsd events will be posted to||No
 eventHandler|Object (see below) for logging and stats||No
 
-Example from Compoxure backend request:
+Example from a Compoxure backend request:
 
 ```js
 var options = {
@@ -95,7 +95,7 @@ var options = {
 };
 ```
 
-From compoxure fragment request:
+From a compoxure fragment request:
 
 ```js
 var options = {
