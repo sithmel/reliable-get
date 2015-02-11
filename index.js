@@ -109,6 +109,7 @@ function ReliableGet(config) {
                     }
 
                     if (hasCacheControl(res, 'no-cache') || hasCacheControl(res, 'no-store')) {
+                        console.log('NO CACHE HEADER RECEIVED! ' + options.cacheKey);
                         next(null, {statusCode: 200, content: res.content, headers: res.headers});
                         return;
                     }
