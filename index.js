@@ -5,6 +5,7 @@ var sf = require('sf');
 var url = require('url');
 var util = require('util');
 var _ = require('lodash');
+var http = require('http');
 var utils = require('./lib/utils');
 var EventEmitter = require('events').EventEmitter;
 var CircuitBreaker = require('./lib/CircuitBreaker');
@@ -12,11 +13,13 @@ var CacheFactory = require('./lib/cache/cacheFactory');
 
 function ReliableGet(config) {
 
+    var cache = CacheFactory.getCache(config.cache);
+    var keepAliveAgent = new http.Agent({ keepAlive: true });
+
     this.get = function(options, next) {
 
         var self = this,
             start = Date.now(),
-            cache = CacheFactory.getCache(config.cache),
             hasCacheControl = function(res, value) {
                 return (res.headers['cache-control'] || '').indexOf(value) !== -1;
             };
@@ -50,7 +53,7 @@ function ReliableGet(config) {
 
             var followRedirect = config.followRedirect !== false; // falsey value
 
-            request({url: options.url, agent: false, timeout: options.timeout, headers: options.headers, followRedirect: followRedirect })
+            request({url: options.url, agent: keepAliveAgent, timeout: options.timeout, headers: options.headers, followRedirect: followRedirect })
                 .on('error', handleError)
                 .on('data', function(data) {
                     content += data.toString();
@@ -130,6 +133,10 @@ function ReliableGet(config) {
 
         }
 
+    }
+
+    this.disconnect = function() {
+        if(cache.disconnect) { cache.disconnect(); }
     }
 
 }
