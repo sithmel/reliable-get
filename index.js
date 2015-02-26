@@ -14,7 +14,7 @@ var CacheFactory = require('./lib/cache/cacheFactory');
 function ReliableGet(config) {
 
     var cache = CacheFactory.getCache(config.cache);
-    var keepAliveAgent = new http.Agent({ keepAlive: true });
+    var keepAliveAgent = new http.Agent({ keepAlive: true, maxSockets: Infinity });
 
     this.get = function(options, next) {
 
