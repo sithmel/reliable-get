@@ -9,6 +9,7 @@ var fs = require('fs');
 function initStubServer(port, next) {
 
     var app = connect();
+    var complexHtml = fs.readFileSync(__dirname + '/complex.html');
 
     app.use(cookieParser());
 
@@ -53,6 +54,10 @@ function initStubServer(port, next) {
         router.get('/faulty', faultyFn);
         router.get('/cb-faulty', faultyFn);
         router.get('/cb-faulty-default', faultyFn);
+
+        router.get('/teaching-resource/:resourceStub', function(req, res, next) {
+            res.end(complexHtml.toString());
+        });
 
     }));
 

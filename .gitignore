@@ -2,6 +2,8 @@
 .bin/
 logs/
 dist/
+benchmark/memory.csv
+*.heapsnapshot
 .DS_Store
 *.log
 workspace.xml

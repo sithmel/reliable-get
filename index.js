@@ -8,7 +8,6 @@ var _ = require('lodash');
 var http = require('http');
 var utils = require('./lib/utils');
 var EventEmitter = require('events').EventEmitter;
-var CircuitBreaker = require('./lib/CircuitBreaker');
 var CacheFactory = require('./lib/cache/cacheFactory');
 
 function ReliableGet(config) {
@@ -76,8 +75,7 @@ function ReliableGet(config) {
         }
 
         var getWithNoCache = function() {
-            new CircuitBreaker(self, options, config, pipeAndCacheContent, function(err, res) {
-                if (err) { return next(err); }
+            pipeAndCacheContent(function(err, res) {
                 res.headers['cache-control'] = 'no-store';
                 next(null, {statusCode: res.statusCode, content: res.content, headers: res.headers});
             });
@@ -104,7 +102,7 @@ function ReliableGet(config) {
                     return;
                 }
 
-                new CircuitBreaker(self, options, config, pipeAndCacheContent, function(err, res) {
+                pipeAndCacheContent(function(err, res) {
 
                     if (err) {
                         var staleContent = oldCacheData ? _.extend(oldCacheData, {stale: true}) : undefined;
@@ -125,6 +123,7 @@ function ReliableGet(config) {
                     });
 
                 });
+
             });
 
         } else {

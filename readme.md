@@ -1,4 +1,4 @@
-Reliable HTTP get wrapper (cache and circuit breaker), best wrapped around things you dont trust very much.
+Reliable HTTP get wrapper (with cache and serve stale on error), best wrapped around things you dont trust very much.
 
 [![Build Status](https://travis-ci.org/tes/reliable-get.svg)](https://travis-ci.org/tes/reliable-get) ![Coverage Status](http://img.shields.io/badge/Coverage-100%25-green.svg)
 
@@ -10,9 +10,6 @@ var ReliableGet = require('reliable-get');
 var config = {
   cache:{
     engine:'memorycache'
-  },
-  circuitbreaker:{
-    includePath: true
   }
 };
 var rg = new ReliableGet();
@@ -29,20 +26,13 @@ rg.get({url:'http://www.google.com'}, function(err, response) {
 
 ## Configuration options
 
-When you create an instance of reliable-get you need to specify the cache and circuit breaker behaviour.  This then applies across all requests.
+When you create an instance of reliable-get you need to specify the cache configuration.  This then applies across all requests.
 
 ```js
 var config = {
   cache:{
     engine:'redis',
     url:'redis://localhost:6379?db=0'
-  },
-  circuitbreaker:{
-    windowDuration:5000,
-    numBuckets: 5,
-    errorThreshold: 20,
-    volumeThreshold: 3,
-    includePath: true
   }
 };
 ```
@@ -51,12 +41,6 @@ Property|Description|Example / Default|Required
 ---------|----------|-------------|-------
 cache.engine|Cache to use, redis/memorycache/nocache|nocache|No
 cache.engine.url|URL to redis|localhost:6379|No
-circuitbreaker.windowDuration|Window duration to collect errors over|10000|No
-circuitbreaker.numBuckets|Number of segments within window|10|No
-circuitbreaker.errorThreshold|Percentage of buckets in error before CB opens|50|No
-circuitbreaker.volumeThreshold|Number of errored requests before CB opens|10|No
-
-To disable the circuit breaker, simply delete the circuitbreaker configuration.
 
 ## GET options
 
