@@ -76,6 +76,8 @@ function ReliableGet(config) {
 
         var getWithNoCache = function() {
             pipeAndCacheContent(function(err, res) {
+                if(err) { return next(err); }
+                res.headers = res.headers || {};
                 res.headers['cache-control'] = 'no-store';
                 next(null, {statusCode: res.statusCode, content: res.content, headers: res.headers});
             });
