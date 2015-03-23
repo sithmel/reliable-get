@@ -253,91 +253,19 @@ describe("Reliable Get", function() {
       });
   });
 
-  // it('CIRCUIT BREAKER: should invoke circuit breaker if configured and then open again after window', function(done) {
-
-  //     this.timeout(20000);
-
-  //     process.stdout.write("\nCircuit breaker slow test: ");
-
-  //     var config = {cache:{engine:'memorycache'},
-  //       'circuitbreaker':{
-  //           'windowDuration':5000,
-  //           'numBuckets': 5,
-  //           'errorThreshold': 20,
-  //           'volumeThreshold': 3,
-  //           'includePath': true
-  //       }
-  //     };
-  //     var rg = new ReliableGet(config);
-  //     var cbOpen = false;
-
-  //     rg.on('log', function(level, message) {
-  //       if(_.contains(message, 'CIRCUIT BREAKER OPEN for host')) {
-  //         cbOpen = true;
-  //       }
-  //       if(_.contains(message, 'CIRCUIT BREAKER CLOSED for host')) {
-  //         cbOpen = false;
-  //       }
-  //     });
-
-  //     async.whilst(function() {
-  //       return !cbOpen;
-  //     }, function(next) {
-  //       rg.get({url:'http://localhost:5001/cb-faulty?faulty=true', cacheKey: 'circuit-breaker', explicitNoCache: true}, function(err, response) {
-  //         expect(err.statusCode).to.be(500);
-  //         process.stdout.write(".");
-  //         next();
-  //       });
-  //     }, function() {
-  //       setTimeout(function() {
-  //         async.whilst(function() {
-  //             return cbOpen;
-  //           }, function(next) {
-  //             rg.get({url:'http://localhost:5001/cb-faulty?faulty=false', cacheKey: 'circuit-breaker', explicitNoCache: true}, function(err, response) {
-  //               process.stdout.write(".");
-  //               setTimeout(next, 500);
-  //             });
-  //           }, function() {
-  //             done();
-  //           }
-  //         );
-  //       }, 5000);
-  //     });
-  // });
-
-  // it('CIRCUIT BREAKER: should invoke circuit breaker with sensible defaults', function(done) {
-
-  //     this.timeout(20000);
-
-  //     process.stdout.write("\nCircuit breaker slow test: ");
-
-  //     var config = {cache:{engine:'memorycache'},
-  //       'circuitbreaker':{
-  //           'includePath': true
-  //       }
-  //     };
-  //     var rg = new ReliableGet(config);
-  //     var cbOpen = false;
-
-  //     rg.on('log', function(level, message) {
-  //       if(_.contains(message, 'CIRCUIT BREAKER OPEN for host')) {
-  //         cbOpen = true;
-  //       }
-  //       if(_.contains(message, 'CIRCUIT BREAKER CLOSED for host')) {
-  //         cbOpen = false;
-  //       }
-  //     });
-
-  //     async.whilst(function() {
-  //       return !cbOpen;
-  //     }, function(next) {
-  //       rg.get({url:'http://localhost:5001/cb-faulty-default?faulty=true', cacheKey: 'circuit-breaker-defaults', explicitNoCache: true}, function(err, response) {
-  //         expect(err.statusCode).to.be(500);
-  //         process.stdout.write(".");
-  //         next();
-  //       });
-  //     }, done);
-  // });
+  it('REDIS CACHE: should not serve cached set-cookie headers if it calls a service that breaks after a successful request', function(done) {
+      var config = {cache:{engine:'redis'}};
+      var rg = new ReliableGet(config);
+      rg.get({url:'http://localhost:5001/set-cookie?faulty=false', cacheKey: 'redis-set-cookie', cacheTTL: 200}, function(err, response) {
+          expect(response.headers['set-cookie']).to.contain('test=bob');
+          expect(response.statusCode).to.be(200);
+          rg.get({url:'http://localhost:5001/set-cookie?faulty=true', cacheKey: 'redis-set-cookie', cacheTTL: 200}, function(err, response) {
+            expect(response.headers).to.not.contain('set-cookie');
+            expect(response.statusCode).to.be(200);
+            done();
+          });
+      });
+  });
 
 });
 

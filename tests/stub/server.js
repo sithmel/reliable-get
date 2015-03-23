@@ -46,6 +46,17 @@ function initStubServer(port, next) {
             res.end('' + Date.now());
         });
 
+        router.get('/set-cookie', function(req, res) {
+            var faulty = req.originalUrl.indexOf('faulty=true') >= 0 ? true : false;
+            if(!faulty) {
+                res.writeHead(200, {'Set-Cookie': 'test=bob', 'Content-Type': 'text/html'});
+                res.end('OK');
+            } else {
+                res.writeHead(500, {'Content-Type': 'text/html'});
+                res.end('Faulty service broken');
+            }
+        });
+
         router.get('/302', function(req, res) {
            res.writeHead(302, {'location': '/'});
            res.end('');
