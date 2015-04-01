@@ -5,16 +5,13 @@ var sf = require('sf');
 var url = require('url');
 var util = require('util');
 var _ = require('lodash');
-var http = require('http');
 var utils = require('./lib/utils');
 var EventEmitter = require('events').EventEmitter;
 var CacheFactory = require('./lib/cache/cacheFactory');
-var DEFAULT_MAX_SOCKETS = 100;
 
 function ReliableGet(config) {
 
     var cache = CacheFactory.getCache(config.cache);
-    var keepAliveAgent = new http.Agent({ keepAlive: !!config.keepAlive, maxSockets: config.maxSockets || DEFAULT_MAX_SOCKETS });
 
     this.get = function(options, next) {
 
@@ -53,7 +50,7 @@ function ReliableGet(config) {
 
             var followRedirect = config.followRedirect !== false; // falsey value
 
-            request({url: options.url, agent: keepAliveAgent, timeout: options.timeout, headers: options.headers, followRedirect: followRedirect })
+            request({url: options.url, agent: false, timeout: options.timeout, headers: options.headers, followRedirect: followRedirect })
                 .on('error', handleError)
                 .on('data', function(data) {
                     content += data.toString();
