@@ -9,11 +9,12 @@ var http = require('http');
 var utils = require('./lib/utils');
 var EventEmitter = require('events').EventEmitter;
 var CacheFactory = require('./lib/cache/cacheFactory');
+var DEFAULT_MAX_SOCKETS = Infinity;
 
 function ReliableGet(config) {
 
     var cache = CacheFactory.getCache(config.cache);
-    var keepAliveAgent = new http.Agent({ keepAlive: true, maxSockets: Infinity });
+    var keepAliveAgent = new http.Agent({ keepAlive: !!config.keepAlive, maxSockets: config.maxSockets || DEFAULT_MAX_SOCKETS });
 
     this.get = function(options, next) {
 
