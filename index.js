@@ -9,7 +9,7 @@ var http = require('http');
 var utils = require('./lib/utils');
 var EventEmitter = require('events').EventEmitter;
 var CacheFactory = require('./lib/cache/cacheFactory');
-var DEFAULT_MAX_SOCKETS = Infinity;
+var DEFAULT_MAX_SOCKETS = 100;
 
 function ReliableGet(config) {
 
