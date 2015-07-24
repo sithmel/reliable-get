@@ -46,7 +46,7 @@ function ReliableGet(config) {
             if(!url.parse(options.url).protocol && options.url !== 'cache') { return handleError({message:'Invalid URL ' + options.url}); }
 
             options.headers.accept = options.headers.accept || 'text/html,application/xhtml+xml,application/xml,application/json';
-            options.headers['user-agent'] = 'Reliable-Get-Request-Agent';
+            options.headers['user-agent'] = options.headers['user-agent'] || 'Reliable-Get-Request-Agent';
 
             var followRedirect = config.followRedirect !== false; // falsey value
 
