@@ -38,7 +38,8 @@ function ReliableGet(config) {
                         url: options.url,
                         errorMessage: err.message
                     });
-                    self.emit('stat', 'error', 'FAIL ' + message, {tracer:options.tracer, statusCode: statusCode, type:options.type});
+                    self.emit('log', 'error', 'FAIL ' + message, {tracer:options.tracer, statusCode: statusCode, type:options.type});
+                    self.emit('stat', 'increment', options.statsdKey + '.requestError');
                     cb({statusCode: statusCode || 500, message: message, headers: headers});
                 }
             }
