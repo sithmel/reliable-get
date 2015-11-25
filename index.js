@@ -106,6 +106,13 @@ function ReliableGet(config) {
 
                     if (err) {
                         var staleContent = oldCacheData ? _.extend(oldCacheData, {stale: true}) : undefined;
+                        if (oldCacheData) {
+                            self.emit('log', 'debug', 'Serving stale cache for key: ' + options.cacheKey, {tracer: options.tracer, type: options.type});
+                            self.emit('stat', 'increment', options.statsdKey + '.cacheStale');
+                        } else {
+                            self.emit('log', 'warn', 'Error and no stale cache available for key: ' + options.cacheKey, {tracer: options.tracer, type: options.type});
+                            self.emit('stat', 'increment', options.statsdKey + '.cacheNoStale');
+                        }
                         return next(err, staleContent);
                     }
 
