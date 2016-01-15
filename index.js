@@ -65,10 +65,10 @@ function ReliableGet(config) {
                 .on('end', function() {
                     if(inErrorState) { return; }
                     res.content = content;
+                    res.timing = Date.now() - start;
                     cb(null, res);
-                    var timing = Date.now() - start;
-                    self.emit('log', 'debug', 'OK ' + options.url, {tracer:options.tracer, responseTime: timing, type:options.type});
-                    self.emit('stat', 'timing', options.statsdKey + '.responseTime', timing);
+                    self.emit('log', 'debug', 'OK ' + options.url, {tracer:options.tracer, responseTime: res.timing, type:options.type});
+                    self.emit('stat', 'timing', options.statsdKey + '.responseTime', res.timing);
                 });
 
         }
@@ -78,7 +78,7 @@ function ReliableGet(config) {
                 if(err) { return next(err); }
                 res.headers = res.headers || {};
                 res.headers['cache-control'] = 'no-store';
-                next(null, {statusCode: res.statusCode, content: res.content, headers: res.headers});
+                next(null, {statusCode: res.statusCode, content: res.content, headers: res.headers, timing: res.timing});
             });
         }
 
@@ -91,7 +91,7 @@ function ReliableGet(config) {
                     var timing = Date.now() - start;
                     self.emit('log','debug', 'CACHE HIT for key: ' + options.cacheKey,{tracer:options.tracer, responseTime: timing, type:options.type});
                     self.emit('stat', 'increment', options.statsdKey + '.cacheHit');
-                    next(null, {statusCode: 200, content: cacheData.content, headers: cacheData.headers});
+                    next(null, {statusCode: 200, content: cacheData.content, headers: cacheData.headers, timing: timing});
                     return;
                 }
 
@@ -126,7 +126,7 @@ function ReliableGet(config) {
                     }
 
                     cache.set(options.cacheKey, {content: res.content, headers: res.headers, options: options}, options.cacheTTL, function() {
-                        next(null, {statusCode: 200, content: res.content, headers:res.headers});
+                        next(null, {statusCode: 200, content: res.content, headers:res.headers, timing: res.timing});
                         self.emit('log','debug', 'CACHE SET for key: ' + options.cacheKey + ' @ TTL: ' + options.cacheTTL,{tracer:options.tracer,type:options.type});
                     });
 
