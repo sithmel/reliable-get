@@ -8,6 +8,7 @@ var _ = require('lodash');
 var utils = require('./lib/utils');
 var EventEmitter = require('events').EventEmitter;
 var CacheFactory = require('./lib/cache/cacheFactory');
+var statusCodeToErrorLevelMap = {'3': 'info', '4': 'warn', '5': 'error' };
 
 function ReliableGet(config) {
 
@@ -34,11 +35,14 @@ function ReliableGet(config) {
             function handleError(err, statusCode, headers) {
                 if (!inErrorState) {
                     inErrorState = true;
-                    var message = sf('Service {url} FAILED due to {errorMessage}', {
+                    var message = sf('Service {url} responded with {errorMessage}', {
                         url: options.url,
                         errorMessage: err.message
                     });
-                    self.emit('log', 'error', 'FAIL ' + message, {tracer:options.tracer, statusCode: statusCode, type:options.type});
+                    var statusGroup = '' + Math.floor(statusCode / 100);
+                    var errorLevel = statusCodeToErrorLevelMap[statusGroup] || 'error';
+                    var errorMessage = (errorLevel === 'error' ? 'FAIL ' + message : message);
+                    self.emit('log', errorLevel, errorMessage, {tracer:options.tracer, statusCode: statusCode, type:options.type});
                     self.emit('stat', 'increment', options.statsdKey + '.requestError');
                     cb({statusCode: statusCode || 500, message: message, headers: headers});
                 }
@@ -111,8 +115,10 @@ function ReliableGet(config) {
                             self.emit('log', 'debug', 'Serving stale cache for key: ' + options.cacheKey, {tracer: options.tracer, type: options.type});
                             self.emit('stat', 'increment', options.statsdKey + '.cacheStale');
                         } else {
-                            self.emit('log', 'warn', 'Error and no stale cache available for key: ' + options.cacheKey, {tracer: options.tracer, type: options.type});
-                            self.emit('stat', 'increment', options.statsdKey + '.cacheNoStale');
+                            if(cache.engine !== 'nocache') {
+                                self.emit('log', 'warn', 'Error and no stale cache available for key: ' + options.cacheKey, {tracer: options.tracer, type: options.type});
+                                self.emit('stat', 'increment', options.statsdKey + '.cacheNoStale');
+                            }
                         }
                         return next(err, staleContent);
                     }

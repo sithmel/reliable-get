@@ -95,6 +95,50 @@ describe("Reliable Get", function() {
       });
   });
 
+ it('NO CACHE: should only log ERROR for 500', function(done) {
+      var config = {cache:{engine:'nocache'}, followRedirect: false};
+      var rg = new ReliableGet(config);
+      rg.on('log', function(level, message) {
+        if (level === 'error') {
+          expect(message).to.contain('FAIL');
+          done();
+        }
+      });
+      rg.get({url:'http://localhost:5001/faulty?faulty=true', timeout: 5}, function(err, response) {
+          expect(err.statusCode).to.be(500);
+      });
+  });
+
+ it('NO CACHE: should only log WARNING for 404', function(done) {
+      var config = {cache:{engine:'nocache'}, followRedirect: false};
+      var rg = new ReliableGet(config);
+      rg.on('log', function(level, message) {
+        if (level === 'warn') {
+          expect(message).to.contain('with status code 404');
+          done();
+        }
+      });
+      rg.get({url:'http://localhost:5001/404', timeout: 5}, function(err, response) {
+          expect(err.statusCode).to.be(404);
+      });
+  });
+
+ it('NO CACHE: should only log INFO for redirects', function(done) {
+      var config = {cache:{engine:'nocache'}, followRedirect: false};
+      var rg = new ReliableGet(config);
+      rg.on('log', function(level, message) {
+        if (level === 'info') {
+          expect(message).to.contain('with status code 302');
+          done();
+        }
+      });
+      rg.get({url:'http://localhost:5001/302', timeout: 5}, function(err, response) {
+          expect(err.statusCode).to.be(302);
+          expect(err.headers.location).to.be('/');
+      });
+  });
+
+
   it('MEMORY CACHE: should initialise with caching on with simple defaults if none provided', function(done) {
       var config = {cache:{engine:'memorycache'}};
       var rg = new ReliableGet(config);
