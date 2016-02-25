@@ -81,7 +81,7 @@ function ReliableGet(config) {
             pipeAndCacheContent(function(err, res) {
                 if(err) { return next(err); }
                 res.headers = res.headers || {};
-                res.headers['cache-control'] = 'no-store';
+                res.headers['cache-control'] = 'no-cache, no-store, must-revalidate';
                 next(null, {statusCode: res.statusCode, content: res.content, headers: res.headers, timing: res.timing});
             });
         }

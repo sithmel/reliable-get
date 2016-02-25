@@ -60,6 +60,7 @@ describe("Reliable Get", function() {
       var rg = new ReliableGet(config);
       rg.get({url:'http://localhost:5001/faulty?faulty=false', cacheKey:'__error__'}, function(err, response) {
           expect(err).to.be(null);
+          expect(response.headers['cache-control']).to.be('no-cache, no-store, must-revalidate');
           expect(response.statusCode).to.be(200);
           done();
       });
