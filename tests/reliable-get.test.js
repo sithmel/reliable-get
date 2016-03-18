@@ -66,6 +66,17 @@ describe("Reliable Get", function() {
       });
   });
 
+  it('NO CACHE: should just request service if explicitNoCache', function(done) {
+    var config = {cache:{engine:'nocache'}};
+    var rg = new ReliableGet(config);
+    rg.get({url:'http://localhost:5001/nocachecustom', explicitNoCache: true}, function(err, response) {
+      expect(err).to.be(null);
+      expect(response.headers['cache-control']).to.be('no-cache, no-store, must-revalidate, private, max-stale=0, post-check=0, pre-check=0');
+      expect(response.statusCode).to.be(200);
+      done();
+    });
+  });
+
   it('NO CACHE: should fail if timeout exceeded', function(done) {
       var config = {cache:{engine:'nocache'}};
       var rg = new ReliableGet(config);
@@ -225,10 +236,12 @@ describe("Reliable Get", function() {
       rg.get({url:'http://localhost:5001/nocache', cacheKey: 'memory-nocache-1', cacheTTL: 10000}, function(err, response) {
           expect(err).to.be(null);
           expect(response.statusCode).to.be(200);
+          expect(response.headers['cache-control']).to.be('private, max-age=0, no-cache');
           var content = response.content;
           setTimeout(function() {
             rg.get({url:'http://localhost:5001/nocache', cacheKey: 'memory-nocache-1', cacheTTL: 10000}, function(err, response) {
               expect(response.statusCode).to.be(200);
+              expect(response.headers['cache-control']).to.be('private, max-age=0, no-cache');
               expect(response.content).to.not.be(content);
               done();
             });
