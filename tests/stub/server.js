@@ -41,6 +41,11 @@ function initStubServer(port, next) {
             res.end('' + Date.now());
         });
 
+        router.get('/nocachecustom', function(req, res) {
+            res.writeHead(200, {'cache-control': 'no-cache, no-store, must-revalidate, private, max-stale=0, post-check=0, pre-check=0'});
+            res.end('' + Date.now());
+        });
+
         router.get('/maxage', function(req, res) {
             res.writeHead(200, {'cache-control': 'private, max-age=5000'});
             res.end('' + Date.now());
