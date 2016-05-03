@@ -98,8 +98,9 @@ describe("Reliable Get", function() {
   });
 
  it('NO CACHE: should not follow a redirect if configured not to', function(done) {
-      var config = {cache:{engine:'nocache'}, followRedirect: false};
+      var config = { cache: { engine: 'nocache' }, requestOpts: { followRedirect: false }};
       var rg = new ReliableGet(config);
+
       rg.get({url:'http://localhost:5001/302', timeout: 5}, function(err, response) {
           expect(err.statusCode).to.be(302);
           expect(err.headers.location).to.be('/');
@@ -107,8 +108,20 @@ describe("Reliable Get", function() {
       });
   });
 
+ it('NO CACHE: should not follow a redirect if configured not to', function(done) {
+      var expectedHeaders = { 'x-header': 'x-response' };
+      var config = { cache: { engine: 'nocache' }, requestOpts: { headers: expectedHeaders}};
+      var rg = new ReliableGet(config);
+
+      rg.get({ url:'http://localhost:5001/headers' }, function(err, response) {
+          expect(response.statusCode).to.be(200);
+          expect(JSON.parse(response.content)['x-header']).to.be('x-response');
+          done();
+      });
+  });
+
  it('NO CACHE: should only log ERROR for 500', function(done) {
-      var config = {cache:{engine:'nocache'}, followRedirect: false};
+      var config = { cache: { engine:'nocache'}, requestOpts: { followRedirect: false }};
       var rg = new ReliableGet(config);
       rg.on('log', function(level, message) {
         if (level === 'error') {
@@ -122,7 +135,7 @@ describe("Reliable Get", function() {
   });
 
  it('NO CACHE: should only log WARNING for 404', function(done) {
-      var config = {cache:{engine:'nocache'}, followRedirect: false};
+      var config = { cache: { engine:'nocache' }, requestOpts: { followRedirect: false }};
       var rg = new ReliableGet(config);
       rg.on('log', function(level, message) {
         if (level === 'warn') {
@@ -325,6 +338,17 @@ describe("Reliable Get", function() {
       });
   });
 
+  describe("Backwards compatibility", function() {
+    it('NO CACHE: should not follow a redirect if configured not to', function(done) {
+        var config = { cache: { engine:'nocache' }, followRedirect: false };
+        var rg = new ReliableGet(config);
+        rg.get({url:'http://localhost:5001/302', timeout: 5}, function(err, response) {
+            expect(err.statusCode).to.be(302);
+            expect(err.headers.location).to.be('/');
+            done();
+        });
+    });
+  });
 });
 
 

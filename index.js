@@ -14,6 +14,17 @@ function ReliableGet(config) {
 
     var cache = CacheFactory.getCache(config.cache);
 
+    config = config || {};
+    config.requestOpts = config.requestOpts || { agent: false };
+    config.requestOpts.followRedirect = config.requestOpts.followRedirect !== false; // make falsey values true
+
+    // Backwards compatibility
+    if (config.followRedirect === false) {
+        config.requestOpts.followRedirect = false;
+    }
+
+    var requestWithDefault = request.defaults(config.requestOpts);
+
     this.get = function(options, next) {
 
         var self = this,
@@ -53,9 +64,7 @@ function ReliableGet(config) {
             options.headers.accept = options.headers.accept || 'text/html,application/xhtml+xml,application/xml,application/json';
             options.headers['user-agent'] = options.headers['user-agent'] || 'Reliable-Get-Request-Agent';
 
-            var followRedirect = config.followRedirect !== false; // falsey value
-
-            request({url: options.url, agent: false, timeout: options.timeout, headers: options.headers, followRedirect: followRedirect })
+            requestWithDefault({ url: options.url, timeout: options.timeout, headers: options.headers })
                 .on('error', handleError)
                 .on('data', function(data) {
                     content += data.toString();
