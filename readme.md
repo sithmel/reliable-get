@@ -37,6 +37,23 @@ var config = {
 };
 ```
 
+You can also pass a property `requestOpts` to pass options to be used in [request](https://github.com/request/request). Example:
+
+```js
+var config = {
+  cache: {
+    cache: {
+      engine: 'redis',
+      url: 'redis://localhost:6379?db=0'
+    },
+    requestOpts: {
+      forever: true,
+      followRedirect: false
+    }
+  }
+}
+```
+
 Property|Description|Example / Default|Required
 ---------|----------|-------------|-------
 cache.engine|Cache to use, redis/memorycache/nocache|nocache|No

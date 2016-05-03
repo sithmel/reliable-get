@@ -75,6 +75,11 @@ function initStubServer(port, next) {
             res.end(complexHtml.toString());
         });
 
+        router.get('/headers', function(req, res) {
+            res.writeHead(200, {'Content-Type': 'application/json'});
+            res.end(JSON.stringify(req.headers));
+        })
+
     }));
 
     app.listen(port).on('listening', next);
