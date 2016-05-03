@@ -89,7 +89,7 @@ describe("Reliable Get", function() {
  it('NO CACHE: should follow a redirect by default', function(done) {
       var config = {cache:{engine:'nocache'}};
       var rg = new ReliableGet(config);
-      rg.get({url:'http://localhost:5001/302', timeout: 5}, function(err, response) {
+      rg.get({url:'http://localhost:5001/302'}, function(err, response) {
           expect(err).to.be(null);
           expect(response.statusCode).to.be(200);
           expect(response.content).to.be("OK");
@@ -101,7 +101,7 @@ describe("Reliable Get", function() {
       var config = { cache: { engine: 'nocache' }, requestOpts: { followRedirect: false }};
       var rg = new ReliableGet(config);
 
-      rg.get({url:'http://localhost:5001/302', timeout: 5}, function(err, response) {
+      rg.get({url:'http://localhost:5001/302'}, function(err, response) {
           expect(err.statusCode).to.be(302);
           expect(err.headers.location).to.be('/');
           done();
@@ -129,7 +129,7 @@ describe("Reliable Get", function() {
           done();
         }
       });
-      rg.get({url:'http://localhost:5001/faulty?faulty=true', timeout: 5}, function(err, response) {
+      rg.get({url:'http://localhost:5001/faulty?faulty=true'}, function(err, response) {
           expect(err.statusCode).to.be(500);
       });
   });
@@ -143,7 +143,7 @@ describe("Reliable Get", function() {
           done();
         }
       });
-      rg.get({url:'http://localhost:5001/404', timeout: 5}, function(err, response) {
+      rg.get({url:'http://localhost:5001/404'}, function(err, response) {
           expect(err.statusCode).to.be(404);
       });
   });
@@ -157,7 +157,7 @@ describe("Reliable Get", function() {
           done();
         }
       });
-      rg.get({url:'http://localhost:5001/302', timeout: 5}, function(err, response) {
+      rg.get({url:'http://localhost:5001/302'}, function(err, response) {
           expect(err.statusCode).to.be(302);
           expect(err.headers.location).to.be('/');
       });
@@ -342,7 +342,7 @@ describe("Reliable Get", function() {
     it('NO CACHE: should not follow a redirect if configured not to', function(done) {
         var config = { cache: { engine:'nocache' }, followRedirect: false };
         var rg = new ReliableGet(config);
-        rg.get({url:'http://localhost:5001/302', timeout: 5}, function(err, response) {
+        rg.get({url:'http://localhost:5001/302'}, function(err, response) {
             expect(err.statusCode).to.be(302);
             expect(err.headers.location).to.be('/');
             done();
