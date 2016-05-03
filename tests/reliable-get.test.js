@@ -108,7 +108,7 @@ describe("Reliable Get", function() {
       });
   });
 
- it('NO CACHE: should not follow a redirect if configured not to', function(done) {
+ it('NO CACHE: should pass requestOpts options to the request client', function(done) {
       var expectedHeaders = { 'x-header': 'x-response' };
       var config = { cache: { engine: 'nocache' }, requestOpts: { headers: expectedHeaders}};
       var rg = new ReliableGet(config);
