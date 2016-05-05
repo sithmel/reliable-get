@@ -55,7 +55,7 @@ describe("Reliable Get", function() {
       });
   });
 
-  it('NO CACHE: should just request service if cache get fails', function(done) {
+  it.only('NO CACHE: should just request service if cache get fails', function(done) {
       var config = {cache:{engine:'nocache'}};
       var rg = new ReliableGet(config);
       rg.get({url:'http://localhost:5001/faulty?faulty=false', cacheKey:'__error__'}, function(err, response) {

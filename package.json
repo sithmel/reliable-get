@@ -23,10 +23,14 @@
   "homepage": "https://github.com/tes/reliable-get",
   "dependencies": {
     "async": "^0.9.0",
+    "async-deco": "^4.3.0",
     "body-parser": "^1.6.7",
+    "cache-manager": "^2.0.1",
+    "cache-manager-redis": "^0.2.2",
     "connect-route": "^0.1.4",
     "hogan.js": "^3.0.2",
     "lodash": "~2.4.1",
+    "memoize-cache": "^2.0.1",
     "redis": "^0.12.1",
     "request": "^2.48.0",
     "sf": "^0.1.7"
