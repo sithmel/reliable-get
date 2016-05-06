@@ -6,11 +6,12 @@ var url = require('url');
 var util = require('util');
 var EventEmitter = require('events').EventEmitter;
 var cacheFactory = require('./lib/cache/cacheFactory');
+var getCacheKey = require('./lib/utils').getCacheKey;
+var HTTPError = require('./lib/http-error');
 
+var compose = require('async-deco/utils/compose');
 var getCacheDecorator = require('async-deco/callback/cache');
 var getFallbackCacheDecorator = require('async-deco/callback/fallback-cache');
-var getFallbackDecorator = require('async-deco/callback/fallback');
-var getRetryDecorator = require('async-deco/callback/retry');
 var getDedupeDecorator = require('async-deco/callback/dedupe');
 
 var statusCodeToErrorLevelMap = {'3': 'info', '4': 'warn', '5': 'error' };
@@ -20,9 +21,14 @@ function ReliableGet(config) {
 
     config = config || {};
 
-    var memoizeCache = cacheFactory(config);
-    var cacheDecorator = getCacheDecorator(memoizeCache);
-    
+    var cache = cacheFactory(config);
+
+    var cacheDecorator = getCacheDecorator(cache);
+    var fallbackDecorator = getFallbackCacheDecorator(cache, {noPush: true, useStale: true});
+    var dedupeDecorator = getDedupeDecorator(getCacheKey);
+
+    var decorator = compose(fallbackDecorator, cacheDecorator, dedupeDecorator);
+
     config.requestOpts = config.requestOpts || { agent: false };
     config.requestOpts.followRedirect = config.requestOpts.followRedirect !== false; // make falsey values true
 
@@ -34,6 +40,7 @@ function ReliableGet(config) {
     var requestWithDefault = request.defaults(config.requestOpts);
 
     var get = function (options, next) {
+      console.log('REQUEST');
         var self = this,
             start = Date.now();
 
@@ -55,7 +62,7 @@ function ReliableGet(config) {
                 var errorMessage = (errorLevel === 'error' ? 'FAIL ' + message : message);
                 self.emit('log', errorLevel, errorMessage, {tracer:options.tracer, statusCode: statusCode, type:options.type});
                 self.emit('stat', 'increment', options.statsdKey + '.requestError');
-                next({statusCode: statusCode || 500, message: message, headers: headers});
+                next(new HTTPError(message, statusCode, headers));
             }
         }
 
@@ -85,11 +92,11 @@ function ReliableGet(config) {
             });
     };
 
-    this.get = cacheDecorator(get);
+    this.get = decorator(get);
 
-    this.disconnect = function() {
-        if(cache.disconnect) { cache.disconnect(); }
-    }
+    // this.disconnect = function() {
+    //     if(cache.disconnect) { cache.disconnect(); }
+    // }
 
 }
 

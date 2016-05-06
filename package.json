@@ -30,7 +30,7 @@
     "connect-route": "^0.1.4",
     "hogan.js": "^3.0.2",
     "lodash": "~2.4.1",
-    "memoize-cache": "^2.0.1",
+    "memoize-cache": "^3.0.0",
     "redis": "^0.12.1",
     "request": "^2.48.0",
     "sf": "^0.1.7"
