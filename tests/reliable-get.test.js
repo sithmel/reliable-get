@@ -55,7 +55,7 @@ describe("Reliable Get", function() {
       });
   });
 
-  it.skip('NO CACHE: should just request service if cache get fails', function(done) {
+  it('NO CACHE: should just request service if cache get fails', function(done) {
       var config = {cache:{engine:'nocache'}};
       var rg = new ReliableGet(config);
       rg.get({url:'http://localhost:5001/faulty?faulty=false', cacheKey:'__error__'}, function(err, response) {
@@ -66,7 +66,7 @@ describe("Reliable Get", function() {
       });
   });
 
-  it.skip('NO CACHE: should just request service if explicitNoCache', function(done) {
+  it('NO CACHE: should just request service if explicitNoCache', function(done) {
     var config = {cache:{engine:'nocache'}};
     var rg = new ReliableGet(config);
     rg.get({url:'http://localhost:5001/nocachecustom', explicitNoCache: true}, function(err, response) {
@@ -143,7 +143,7 @@ describe("Reliable Get", function() {
           done();
         }
       });
-      rg.get({url:'http://localhost:5001/404'}, function(err, response) {
+      rg.get({url:'http://localhost:5001/404', explicitNoCache: true}, function(err, response) {
           expect(err.statusCode).to.be(404);
       });
   });
@@ -206,7 +206,7 @@ describe("Reliable Get", function() {
       });
   });
 
-  it.skip('MEMORY CACHE: should serve stale content if it calls a service that breaks after a successful request and ttl expired', function(done) {
+  it('MEMORY CACHE: should serve stale content if it calls a service that breaks after a successful request and ttl expired', function(done) {
       var config = {cache:{engine:'memorycache'}};
       var rg = new ReliableGet(config);
       rg.get({url:'http://localhost:5001/faulty?faulty=false', cacheKey: 'memory-faulty-3', cacheTTL: 200}, function(err, response) {
@@ -223,17 +223,19 @@ describe("Reliable Get", function() {
       });
   });
 
-  it.skip('MEMORY CACHE: should return whatever is in cache at the cache key if the url is "cache"', function(done) {
+  it('MEMORY CACHE: should return whatever is in cache at the cache key if the url is "cache"', function(done) {
       var config = {cache:{engine:'memorycache'}};
       var rg = new ReliableGet(config);
-      rg.get({url:'cache', cacheKey:'memory-faulty-2', cacheTTL: 10000}, function(err, response) {
-          expect(response.statusCode).to.be(200);
-          expect(response.content).to.be('Faulty service managed to serve good content!');
-          done();
+      rg.get({url:'http://localhost:5001/faulty?faulty=false', cacheKey: 'memory-faulty-2', cacheTTL: 10000}, function(err, response) {
+        rg.get({url:'cache', cacheKey:'memory-faulty-2', cacheTTL: 10000}, function(err, response) {
+            expect(response.statusCode).to.be(200);
+            expect(response.content).to.be('Faulty service managed to serve good content!');
+            done();
+        });
       });
   });
 
-  it.skip('MEMORY CACHE: should return 404 if nothing is in cache at the cache key if the url is "cache"', function(done) {
+  it('MEMORY CACHE: should return 404 if nothing is in cache at the cache key if the url is "cache"', function(done) {
       var config = {cache:{engine:'memorycache'}};
       var rg = new ReliableGet(config);
       rg.get({url:'cache', cacheKey:'invalid-key', cacheTTL: 10000}, function(err, response) {
@@ -307,7 +309,7 @@ describe("Reliable Get", function() {
       });
   });
 
-  it.skip('REDIS CACHE: should serve stale content if it calls a service that breaks after a successful request and ttl expired', function(done) {
+  it('REDIS CACHE: should serve stale content if it calls a service that breaks after a successful request and ttl expired', function(done) {
       var config = {cache:{engine:'redis'}};
       var rg = new ReliableGet(config);
       rg.get({url:'http://localhost:5001/faulty?faulty=false', cacheKey: 'redis-faulty-3', cacheTTL: 200}, function(err, response) {
@@ -350,5 +352,3 @@ describe("Reliable Get", function() {
     });
   });
 });
-
-

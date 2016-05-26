@@ -1,4 +1,3 @@
-var async = require('async');
 var ReliableGet = require('..');
 var config = {cache:{engine:'nocache'}};
 var rg = new ReliableGet(config);
@@ -12,7 +11,7 @@ function fireRequest(url, next) {
     });
 }
 
-function fireLotsOfRequests(next) {
+function fireLotsOfRequests() {
     var urls = [];
     var counter = 0;
     for (var i = 0; i < 40; i++){
@@ -25,7 +24,9 @@ function fireLotsOfRequests(next) {
         fireRequest(url, function (err, res) {
             console.log('Success:', res.timing, counter++);
         });
-        if (urls.length) fire();
+        if (urls.length) {
+            fire();
+        }
       }, 10);
     }())
 }
