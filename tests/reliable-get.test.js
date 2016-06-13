@@ -330,7 +330,7 @@ describe("Reliable Get", function() {
       var config = {cache:{engine:'redis'}};
       var rg = new ReliableGet(config);
       rg.get({url:'http://localhost:5001/set-cookie?faulty=false', cacheKey: 'redis-set-cookie', cacheTTL: 200}, function(err, response) {
-          expect(response.headers['set-cookie']).to.contain('test=bob');
+          expect(response.headers).to.not.contain('set-cookie');
           expect(response.statusCode).to.be(200);
           rg.get({url:'http://localhost:5001/set-cookie?faulty=true', cacheKey: 'redis-set-cookie', cacheTTL: 200}, function(err, response) {
             expect(response.headers).to.not.contain('set-cookie');

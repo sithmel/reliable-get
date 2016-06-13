@@ -6,7 +6,10 @@ var url = require('url');
 var util = require('util');
 var EventEmitter = require('events').EventEmitter;
 var cacheFactory = require('./lib/cache/cacheFactory');
-var getCacheKey = require('./lib/utils').getCacheKey;
+var utils = require('./lib/utils');
+var getCacheKey = utils.getCacheKey;
+var isCached = utils.isCached;
+var filterHeaders = utils.filterHeaders;
 var HTTPError = require('./lib/http-error');
 
 var compose = require('async-deco/utils/compose');
@@ -22,7 +25,6 @@ function ReliableGet(config) {
     config = config || {};
 
     var cache = cacheFactory(config);
-
     var cacheDecorator = getCacheDecorator(cache);
     var fallbackDecorator = getFallbackCacheDecorator(cache, {noPush: true, useStale: true});
     var dedupeDecorator = getDedupeDecorator(getCacheKey);
@@ -72,6 +74,10 @@ function ReliableGet(config) {
             })
             .on('response', function(response) {
                 res = response;
+                if(isCached(options)) {
+                    res.headers = filterHeaders(res.headers);
+//                    console.log(res.headers, !options.explicitNoCache, options.cacheTTL !== 0, isCached(options))
+                }
                 if(response.statusCode != 200) {
                     inErrorState = true;
                     next(new HTTPError(formatError('status code ' + response.statusCode), response.statusCode, response.headers));
@@ -87,6 +93,7 @@ function ReliableGet(config) {
 
     this.get = function (options, next) {
         var self = this;
+        var logs = [];
         var cacheError = false;
         //var cacheHit = false;
         var fallbackCacheHit = false;
@@ -95,9 +102,8 @@ function ReliableGet(config) {
         var result, err, statusGroup, errorLevel, errorMessage;
 
         var logDecorator = getLogDecorator(function (name, id, ts, evt, payload) {
-            //console.log(name, id, ts, evt)
+            logs.push({ts: ts, evt: evt});
             if (evt === 'cache-error') {
-                console.log('cache error', payload.cacheErr)
                 cacheError = true;
             }
             else if (evt === 'log-end') {
@@ -156,6 +162,7 @@ function ReliableGet(config) {
                 if(cacheError) {
                     res.headers['cache-control'] = 'no-cache, no-store, must-revalidate';
                 }
+                res.logs = logs;
             }
             next(err, res);
         });
