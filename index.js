@@ -93,20 +93,22 @@ function ReliableGet(config) {
 
     this.get = function (options, next) {
         var self = this;
-        var logs = [];
         var cacheError = false;
-        //var cacheHit = false;
         var fallbackCacheHit = false;
         var fallbackCacheStale = false;
         var error;
         var result, err, statusGroup, errorLevel, errorMessage;
 
+        var realTimingStart, realTimingEnd;
         var logDecorator = getLogDecorator(function (name, id, ts, evt, payload) {
-            logs.push({ts: ts, evt: evt});
             if (evt === 'cache-error') {
                 cacheError = true;
             }
+            else if (evt === 'log-start') {
+                realTimingStart = ts;
+            }
             else if (evt === 'log-end') {
+                realTimingEnd = ts;
                 result = payload.result;
                 self.emit('log', 'debug', 'OK ' + options.url, {tracer:options.tracer, responseTime: result.timing, type:options.type});
                 self.emit('stat', 'timing', options.statsdKey + '.responseTime', result.timing);
@@ -162,7 +164,8 @@ function ReliableGet(config) {
                 if(cacheError) {
                     res.headers['cache-control'] = 'no-cache, no-store, must-revalidate';
                 }
-                res.logs = logs;
+
+                res.realTiming = realTimingEnd - realTimingStart;
             }
             next(err, res);
         });
