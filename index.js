@@ -57,6 +57,7 @@ function ReliableGet(config) {
         if (options.url === 'cache') {
           return next(null, {content: 'No content in cache at key: ' + options.cacheKey, statusCode: 404});
         }
+
         if(!url.parse(options.url).protocol && options.url !== 'cache') {
             return next(new HTTPError(formatError('Invalid URL ' + options.url)));
         }
@@ -76,7 +77,6 @@ function ReliableGet(config) {
                 res = response;
                 if(isCached(options)) {
                     res.headers = filterHeaders(res.headers);
-//                    console.log(res.headers, !options.explicitNoCache, options.cacheTTL !== 0, isCached(options))
                 }
                 if(response.statusCode != 200) {
                     inErrorState = true;
@@ -97,10 +97,10 @@ function ReliableGet(config) {
         var fallbackCacheHit = false;
         var fallbackCacheStale = false;
         var error;
-        var result, err, statusGroup, errorLevel, errorMessage;
 
         var realTimingStart, realTimingEnd;
         var logDecorator = getLogDecorator(function (name, id, ts, evt, payload) {
+            var result, err, statusGroup, errorLevel, errorMessage;
             if (evt === 'cache-error') {
                 cacheError = true;
             }
@@ -147,15 +147,14 @@ function ReliableGet(config) {
         });
 
         var decorator = compose([
-          logDecorator,
-          fallbackDecorator,
-          cacheDecorator,
-          dedupeDecorator,
-          sanitizeAsyncFunction
+            logDecorator,
+            fallbackDecorator,
+            cacheDecorator,
+            dedupeDecorator,
+            sanitizeAsyncFunction
         ]);
 
         return decorator(getReq)(options, function (err, res) {
-//            console.log('res', res.content)
             if (res) {
                 if (fallbackCacheHit && fallbackCacheStale) {
                     err = error;
@@ -170,10 +169,6 @@ function ReliableGet(config) {
             next(err, res);
         });
     }
-    // this.disconnect = function() {
-    //     if(cache.disconnect) { cache.disconnect(); }
-    // }
-
 }
 
 util.inherits(ReliableGet, EventEmitter);
