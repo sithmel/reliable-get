@@ -12,7 +12,7 @@ var config = {
     engine:'memorycache'
   }
 };
-var rg = new ReliableGet();
+var rg = new ReliableGet(config);
 rg.on('log', function(level, message, data) {
   // Wire up to your favourite logger
 });
@@ -42,14 +42,12 @@ You can also pass a property `requestOpts` to pass options to be used in [reques
 ```js
 var config = {
   cache: {
-    cache: {
-      engine: 'redis',
-      url: 'redis://localhost:6379?db=0'
-    },
-    requestOpts: {
-      forever: true,
-      followRedirect: false
-    }
+    engine: 'redis',
+    url: 'redis://localhost:6379?db=0'
+  },
+  requestOpts: {
+    forever: true,
+    followRedirect: false
   }
 }
 ```
@@ -74,7 +72,7 @@ Property|Description|Example / Default|Required
 url|Service to get|http://my-service.tes.co.uk|Yes
 timeout|Timeout for service|5000|No
 cacheKey|Key to store cached value against|my-service_tes_co_uk|No
-cacheTTL|TTL of cached value|1 minute|No
+cacheTTL|TTL of cached value in ms|1 minute (60000)|No
 explicitNoCache|Do not cache under any circumstances|false|No
 headers|Headers to send with request||No
 tracer|Unique value to pass with request||No
