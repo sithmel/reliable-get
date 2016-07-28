@@ -27,7 +27,7 @@ function ReliableGet(config) {
     var cache = cacheFactory(config);
     var cacheDecorator = getCacheDecorator(cache);
     var fallbackDecorator = getFallbackCacheDecorator(cache, {noPush: true, useStale: true});
-    var dedupeDecorator = getDedupeDecorator(getCacheKey);
+    var dedupeDecorator = getDedupeDecorator(getCacheKey(config));
 
     config.requestOpts = config.requestOpts || { agent: false };
     config.requestOpts.followRedirect = config.requestOpts.followRedirect !== false; // make falsey values true
