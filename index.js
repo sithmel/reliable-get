@@ -5,12 +5,6 @@ var sf = require('sf');
 var url = require('url');
 var util = require('util');
 var EventEmitter = require('events').EventEmitter;
-var cacheFactory = require('./lib/cache/cacheFactory');
-var utils = require('./lib/utils');
-var getCacheKey = utils.getCacheKey;
-var isCached = utils.isCached;
-var filterHeaders = utils.filterHeaders;
-var HTTPError = require('./lib/http-error');
 
 var compose = require('async-deco/utils/compose');
 var getCacheDecorator = require('async-deco/callback/cache');
@@ -18,6 +12,13 @@ var getFallbackCacheDecorator = require('async-deco/callback/fallback-cache');
 var getDedupeDecorator = require('async-deco/callback/dedupe');
 var getLogDecorator = require('async-deco/callback/log');
 var sanitizeAsyncFunction = require('async-deco/utils/sanitizeAsyncFunction');
+
+var cacheFactory = require('./lib/cache/cacheFactory');
+var utils = require('./lib/utils');
+var getCacheKey = utils.getCacheKey;
+var isCached = utils.isCached;
+var filterHeaders = utils.filterHeaders;
+var HTTPError = require('./lib/http-error');
 
 var statusCodeToErrorLevelMap = {'3': 'info', '4': 'warn', '5': 'error' };
 
@@ -160,7 +161,7 @@ function ReliableGet(config) {
                     err = error;
                     res.stale = true;
                 }
-                if(cacheError) {
+                if (cacheError) {
                     res.headers['cache-control'] = 'no-cache, no-store, must-revalidate';
                 }
 

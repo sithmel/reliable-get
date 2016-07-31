@@ -111,3 +111,17 @@ var options = {
   }
 ```
 
+Configuration
+=============
+
+Cache configuration
+-------------------
+The cache object accept any config value accepted by redis. It also takes:
+* config.cache.engine: nocache, memorycache, redis (use nocache/memorycache for testing only!)
+* config.cache.url: redis dsn, it is translated to the connection parameters
+* config.cache.compression: enable snappy compression on cached items
+* config.cache.namespace: adds this string as a prefix to any key. Useful to share redis with other services or migrations
+
+Request Configuration
+---------------------
+The "config.requestOpts" contains the default configuration passed to "request".
