@@ -1,8 +1,5 @@
 'use strict';
 
-var request = require('request');
-var sf = require('sf');
-var url = require('url');
 var util = require('util');
 var EventEmitter = require('events').EventEmitter;
 
@@ -14,11 +11,8 @@ var getLogDecorator = require('async-deco/callback/log');
 var sanitizeAsyncFunction = require('async-deco/utils/sanitizeAsyncFunction');
 
 var cacheFactory = require('./lib/cache/cacheFactory');
-var utils = require('./lib/utils');
-var getCacheKey = utils.getCacheKey;
-var isCached = utils.isCached;
-var filterHeaders = utils.filterHeaders;
-var HTTPError = require('./lib/http-error');
+var getCacheKey = require('./lib/utils').getCacheKey;
+var getRequest = require('./lib/getRequest');
 
 var statusCodeToErrorLevelMap = {'3': 'info', '4': 'warn', '5': 'error' };
 
@@ -38,59 +32,7 @@ function ReliableGet(config) {
         config.requestOpts.followRedirect = false;
     }
 
-    var requestWithDefault = request.defaults(config.requestOpts);
-
-    var getReq = function (options, next) {
-        var start = Date.now();
-
-        // Defaults
-        options.headers = options.headers || config.headers || {};
-        options.timeout = options.hasOwnProperty('timeout') ? options.timeout : 5000;
-
-        var content = '', inErrorState = false, res;
-
-        var formatError = function (mess) {
-            return sf('Service {url} responded with {errorMessage}', {
-                url: options.url,
-                errorMessage: mess
-            });
-        };
-        if (options.url === 'cache') {
-          return next(null, {content: 'No content in cache at key: ' + options.cacheKey, statusCode: 404});
-        }
-
-        if(!url.parse(options.url).protocol && options.url !== 'cache') {
-            return next(new HTTPError(formatError('Invalid URL ' + options.url)));
-        }
-
-        options.headers.accept = options.headers.accept || 'text/html,application/xhtml+xml,application/xml,application/json';
-        options.headers['user-agent'] = options.headers['user-agent'] || 'Reliable-Get-Request-Agent';
-
-        requestWithDefault({ url: options.url, timeout: options.timeout, headers: options.headers })
-            .on('error', function (err) {
-                inErrorState = true;
-                next(new HTTPError(formatError(err.message)));
-            })
-            .on('data', function(data) {
-                content += data.toString();
-            })
-            .on('response', function(response) {
-                res = response;
-                if(isCached(options)) {
-                    res.headers = filterHeaders(res.headers);
-                }
-                if(response.statusCode != 200) {
-                    inErrorState = true;
-                    next(new HTTPError(formatError('status code ' + response.statusCode), response.statusCode, response.headers));
-                }
-            })
-            .on('end', function() {
-                if(inErrorState) { return; }
-                res.content = content;
-                res.timing = Date.now() - start;
-                next(null, res);
-            });
-    };
+    var req = getRequest(config);
 
     this.get = function (options, next) {
         var self = this;
@@ -155,7 +97,7 @@ function ReliableGet(config) {
             sanitizeAsyncFunction
         ]);
 
-        return decorator(getReq)(options, function (err, res) {
+        return decorator(req)(options, function (err, res) {
             if (res) {
                 if (fallbackCacheHit && fallbackCacheStale) {
                     err = error;
