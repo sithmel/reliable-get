@@ -2,6 +2,11 @@ Reliable HTTP get wrapper (with cache and serve stale on error), best wrapped ar
 
 [![Build Status](https://travis-ci.org/tes/reliable-get.svg)](https://travis-ci.org/tes/reliable-get) ![Coverage Status](http://img.shields.io/badge/Coverage-100%25-green.svg)
 
+Behaviour
+=========
+If reliable-get makes a request that times out or errors, its callback will receive *both* an error object and a previously cached response, if one is present in cache.
+You can then decide whether to ignore the error and use the cached response, or not.
+
 Basic usage
 =============
 
