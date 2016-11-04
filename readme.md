@@ -2,6 +2,11 @@ Reliable HTTP get wrapper (with cache and serve stale on error), best wrapped ar
 
 [![Build Status](https://travis-ci.org/tes/reliable-get.svg)](https://travis-ci.org/tes/reliable-get) ![Coverage Status](http://img.shields.io/badge/Coverage-100%25-green.svg)
 
+Behaviour
+=========
+If reliable-get makes a request that times out or errors, its callback will receive *both* an error object and a previously cached response, if one is present in cache.
+You can then decide whether to ignore the error and use the cached response, or not.
+
 Basic usage
 =============
 
@@ -12,7 +17,7 @@ var config = {
     engine:'memorycache'
   }
 };
-var rg = new ReliableGet();
+var rg = new ReliableGet(config);
 rg.on('log', function(level, message, data) {
   // Wire up to your favourite logger
 });
@@ -42,14 +47,12 @@ You can also pass a property `requestOpts` to pass options to be used in [reques
 ```js
 var config = {
   cache: {
-    cache: {
-      engine: 'redis',
-      url: 'redis://localhost:6379?db=0'
-    },
-    requestOpts: {
-      forever: true,
-      followRedirect: false
-    }
+    engine: 'redis',
+    url: 'redis://localhost:6379?db=0'
+  },
+  requestOpts: {
+    forever: true,
+    followRedirect: false
   }
 }
 ```
@@ -74,7 +77,7 @@ Property|Description|Example / Default|Required
 url|Service to get|http://my-service.tes.co.uk|Yes
 timeout|Timeout for service|5000|No
 cacheKey|Key to store cached value against|my-service_tes_co_uk|No
-cacheTTL|TTL of cached value|1 minute|No
+cacheTTL|TTL of cached value in ms|1 minute (60000)|No
 explicitNoCache|Do not cache under any circumstances|false|No
 headers|Headers to send with request||No
 tracer|Unique value to pass with request||No
