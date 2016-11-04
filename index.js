@@ -8,6 +8,7 @@ var getCacheDecorator = require('async-deco/callback/cache');
 var getFallbackCacheDecorator = require('async-deco/callback/fallback-cache');
 var getDedupeDecorator = require('async-deco/callback/dedupe');
 var getLogDecorator = require('async-deco/callback/log');
+var addLogger = require('async-deco/utils/add-logger');
 var sanitizeAsyncFunction = require('async-deco/utils/sanitizeAsyncFunction');
 
 var cacheFactory = require('./lib/cache/cacheFactory');
@@ -42,7 +43,8 @@ function ReliableGet(config) {
         var error;
 
         var realTimingStart, realTimingEnd;
-        var logDecorator = getLogDecorator(function (name, id, ts, evt, payload) {
+        var logDecorator = getLogDecorator();
+        var logger = addLogger(function (evt, payload, ts) {
             var result, err, statusGroup, errorLevel, errorMessage;
             if (evt === 'cache-error') {
                 cacheError = true;
@@ -90,6 +92,7 @@ function ReliableGet(config) {
         });
 
         var decorator = compose([
+            logger,
             logDecorator,
             fallbackDecorator,
             cacheDecorator,
