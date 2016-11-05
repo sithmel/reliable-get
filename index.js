@@ -55,8 +55,8 @@ function ReliableGet(config) {
             else if (evt === 'log-end') {
                 realTimingEnd = ts;
                 result = payload.result;
-                self.emit('log', 'debug', 'OK ' + options.url, {tracer:options.tracer, responseTime: result.timing, type:options.type});
-                self.emit('stat', 'timing', options.statsdKey + '.responseTime', result.timing);
+                self.emit('log', 'debug', 'OK ' + options.url, {tracer:options.tracer, responseTime: realTimingEnd - realTimingStart, type:options.type});
+                self.emit('stat', 'timing', options.statsdKey + '.responseTime', realTimingEnd - realTimingStart);
             }
             else if (evt === 'log-error') {
                 err = payload.err;
@@ -68,26 +68,30 @@ function ReliableGet(config) {
             }
             else if (evt === 'cache-hit') {
                 result = payload.result.hit;
-                self.emit('log','debug', 'CACHE HIT for key: ' + options.cacheKey,{tracer:options.tracer, responseTime: result.timing, type:options.type});
+                self.emit('log','debug', 'CACHE HIT for key: ' + payload.key, {tracer:options.tracer, responseTime: payload.timing, type: options.type});
                 self.emit('stat', 'increment', options.statsdKey + '.cacheHit');
             }
             else if (evt === 'cache-miss') {
-                self.emit('log', 'debug', 'CACHE MISS for key: ' + options.cacheKey,{tracer:options.tracer, type:options.type});
+                self.emit('log', 'debug', 'CACHE MISS for key: ' + payload.key, {tracer:options.tracer, type: options.type});
                 self.emit('stat', 'increment', options.statsdKey + '.cacheMiss');
             }
             else if (evt === 'cache-set') {
-                self.emit('log','debug', 'CACHE SET for key: ' + options.cacheKey + ' @ TTL: ' + options.cacheTTL,{tracer:options.tracer,type:options.type});
+                self.emit('log','debug', 'CACHE SET for key: ' + payload.key + ' @ TTL: ' + options.cacheTTL, {tracer:options.tracer,type: options.type});
             }
             else if (evt === 'fallback-cache-hit') {
                 fallbackCacheStale = payload.result.stale;
                 fallbackCacheHit = true;
                 error = payload.actualResult.err;
-                self.emit('log', 'debug', 'Serving stale cache for key: ' + options.cacheKey, {tracer: options.tracer, type: options.type});
+                self.emit('log', 'debug', 'Serving stale cache for key: ' + payload.key, {tracer: options.tracer, type: options.type});
                 self.emit('stat', 'increment', options.statsdKey + '.cacheStale');
             }
             else if (evt === 'fallback-cache-miss') {
-                self.emit('log', 'warn', 'Error and no stale cache available for key: ' + options.cacheKey, {tracer: options.tracer, type: options.type});
+                self.emit('log', 'warn', 'Error and no stale cache available for key: ' + payload.key, {tracer: options.tracer, type: options.type});
                 self.emit('stat', 'increment', options.statsdKey + '.cacheNoStale');
+            }
+            else if (evt === 'dedupe-queue') {
+                self.emit('log', 'debug', 'Deduped: ' + payload.key, {tracer: options.tracer, type: options.type});
+                self.emit('stat', 'increment', options.statsdKey + '.dedupe-queue');
             }
         });
 

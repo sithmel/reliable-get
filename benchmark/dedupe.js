@@ -1,7 +1,13 @@
 var ReliableGet = require('..');
-//var config = {cache:{engine:'nocache'}};
+// var config = {cache:{engine:'nocache'}};
 var config = {cache:{engine:'redis'}};
 var rg = new ReliableGet(config);
+
+rg.on('log', function(level, message, data) {
+//  if (message.startsWith('Deduped')) {
+    console.log(level, message, data);
+//  }
+});
 
 var urllist = [
   'https://www.tes.com',
@@ -21,6 +27,7 @@ function fireRequest(url, next) {
       if(err) { return next(err); }
       next(err, res);
     });
+
 }
 
 function fireLotsOfRequests() {
@@ -34,7 +41,11 @@ function fireLotsOfRequests() {
       setTimeout(function ( ){
         var url = urls.pop();
         fireRequest(url, function (err, res) {
-            console.log('Success:', res.realTiming, counter++);
+            if (err) {
+                console.log(err);
+                return ;
+            }
+            console.log(counter++, ' - success:', url, res.content.length,  res.realTiming, res.timing);
         });
         if (urls.length) {
             fire();
