@@ -3,11 +3,11 @@ var ReliableGet = require('..');
 var config = {cache:{engine:'redis'}};
 var rg = new ReliableGet(config);
 
-rg.on('log', function(level, message, data) {
+//rg.on('log', function(level, message, data) {
   //if (message.startsWith('Deduped')) {
-    console.log(level, message, data);
+//    console.log(level, message, data);
   //}
-});
+//});
 
 var urllist = [
   'https://www.tes.com',
@@ -45,7 +45,7 @@ function fireLotsOfRequests() {
                 console.log(err);
                 return ;
             }
-            console.log(counter++, ' - success:', url,  res.realTiming, res.deduped);
+            console.log(counter++, ' - success:', url,  res.realTiming, res.deduped ? 'deduped' : '');
         });
         if (urls.length) {
             fire();
