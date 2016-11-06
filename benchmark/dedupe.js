@@ -4,17 +4,17 @@ var config = {cache:{engine:'redis'}};
 var rg = new ReliableGet(config);
 
 rg.on('log', function(level, message, data) {
-//  if (message.startsWith('Deduped')) {
+  //if (message.startsWith('Deduped')) {
     console.log(level, message, data);
-//  }
+  //}
 });
 
 var urllist = [
   'https://www.tes.com',
-  'http://stackoverflow.com/questions/6851909/how-do-i-delete-everything-in-redis',
-  'https://github.com/sithmel/async-deco/blob/master/src/cache.js',
-  'https://github.com/tes/reliable-get/blob/master/index.js',
-  'https://github.com/tes/reliable-get/tree/master/lib/cache',
+  'https://www.tes.com/teaching-resource/animal-non-chronological-report-examples-11045757',
+  'https://www.tes.com/teaching-resources/blog/supporting-students-core-subjects',
+  'https://www.tes.com/news/school-news/breaking-news/education-super-union-step-closer-atl-and-nut-vote-ballot-members',
+  'https://www.tes.com/news/school-news/breaking-views/%E2%80%98i-hear-teachers-crying-their-kitchen-floor-because-stress%E2%80%99',
   'https://www.tes.com/jobs/',
   'https://www.tes.com/teaching-resources',
   'https://community.tes.com/',
@@ -45,7 +45,7 @@ function fireLotsOfRequests() {
                 console.log(err);
                 return ;
             }
-            console.log(counter++, ' - success:', url, res.content.length,  res.realTiming, res.timing);
+            console.log(counter++, ' - success:', url,  res.realTiming, res.deduped);
         });
         if (urls.length) {
             fire();

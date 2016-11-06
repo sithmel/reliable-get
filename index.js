@@ -12,7 +12,7 @@ var addLogger = require('async-deco/utils/add-logger');
 var sanitizeAsyncFunction = require('async-deco/utils/sanitizeAsyncFunction');
 
 var cacheFactory = require('./lib/cache/cacheFactory');
-var getCacheKey = require('./lib/utils').getCacheKey;
+var utils = require('./lib/utils');
 var getRequest = require('./lib/getRequest');
 
 var statusCodeToErrorLevelMap = {'3': 'info', '4': 'warn', '5': 'error' };
@@ -23,7 +23,7 @@ function ReliableGet(config) {
     var cache = cacheFactory(config);
     var cacheDecorator = getCacheDecorator(cache);
     var fallbackDecorator = getFallbackCacheDecorator(cache, {noPush: true, useStale: true});
-    var dedupeDecorator = getDedupeDecorator(getCacheKey(config));
+    var dedupeDecorator = getDedupeDecorator(utils.getCacheKey(config));
 
     config.requestOpts = config.requestOpts || { agent: false };
     config.requestOpts.followRedirect = config.requestOpts.followRedirect !== false; // make falsey values true
@@ -40,6 +40,7 @@ function ReliableGet(config) {
         var cacheError = false;
         var fallbackCacheHit = false;
         var fallbackCacheStale = false;
+        var deduped = false;
         var error;
 
         var realTimingStart, realTimingEnd;
@@ -76,7 +77,7 @@ function ReliableGet(config) {
                 self.emit('stat', 'increment', options.statsdKey + '.cacheMiss');
             }
             else if (evt === 'cache-set') {
-                self.emit('log','debug', 'CACHE SET for key: ' + payload.key + ' @ TTL: ' + options.cacheTTL, {tracer:options.tracer,type: options.type});
+                self.emit('log','debug', 'CACHE SET for key: ' + payload.key + ' @ TTL: ' + utils.getCacheValidity(payload.args, payload.res), {tracer:options.tracer,type: options.type});
             }
             else if (evt === 'fallback-cache-hit') {
                 fallbackCacheStale = payload.result.stale;
@@ -90,6 +91,7 @@ function ReliableGet(config) {
                 self.emit('stat', 'increment', options.statsdKey + '.cacheNoStale');
             }
             else if (evt === 'dedupe-queue') {
+                deduped = true;
                 self.emit('log', 'debug', 'Deduped: ' + payload.key, {tracer: options.tracer, type: options.type});
                 self.emit('stat', 'increment', options.statsdKey + '.dedupe-queue');
             }
@@ -113,7 +115,7 @@ function ReliableGet(config) {
                 if (cacheError) {
                     res.headers['cache-control'] = 'no-cache, no-store, must-revalidate';
                 }
-
+                res.deduped = deduped;
                 res.realTiming = realTimingEnd - realTimingStart;
             }
             next(err, res);
