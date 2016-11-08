@@ -1,6 +1,6 @@
 {
   "name": "reliable-get",
-  "version": "0.1.31",
+  "version": "1.0.0",
   "description": "A circuit breaker and cached wrapper for GET requests (enables reliable external service interaction).",
   "main": "index.js",
   "scripts": {
@@ -22,19 +22,24 @@
   },
   "homepage": "https://github.com/tes/reliable-get",
   "dependencies": {
-    "async": "^0.9.0",
+    "async-deco": "^7.0.3",
     "body-parser": "^1.6.7",
+    "cache-manager": "^2.0.1",
+    "cache-manager-redis": "^0.2.2",
     "connect-route": "^0.1.4",
     "hogan.js": "^3.0.2",
     "lodash": "~2.4.1",
-    "redis": "^0.12.1",
+    "memoize-cache": "^3.3.1",
+    "memoize-cache-utils": "^0.0.2",
     "request": "^2.48.0",
     "sf": "^0.1.7"
   },
   "devDependencies": {
+    "async": "^0.9.0",
     "connect": "^3.3.3",
     "cookie-parser": "^1.3.3",
     "expect.js": "~0.3.1",
+    "heapdump": "^0.3.7",
     "istanbul": "0.3.2",
     "jshint": "^2.5.6",
     "mocha": "~1.18.2",

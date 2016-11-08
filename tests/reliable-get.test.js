@@ -143,7 +143,7 @@ describe("Reliable Get", function() {
           done();
         }
       });
-      rg.get({url:'http://localhost:5001/404'}, function(err, response) {
+      rg.get({url:'http://localhost:5001/404', explicitNoCache: true}, function(err, response) {
           expect(err.statusCode).to.be(404);
       });
   });
@@ -226,10 +226,12 @@ describe("Reliable Get", function() {
   it('MEMORY CACHE: should return whatever is in cache at the cache key if the url is "cache"', function(done) {
       var config = {cache:{engine:'memorycache'}};
       var rg = new ReliableGet(config);
-      rg.get({url:'cache', cacheKey:'memory-faulty-2', cacheTTL: 10000}, function(err, response) {
-          expect(response.statusCode).to.be(200);
-          expect(response.content).to.be('Faulty service managed to serve good content!');
-          done();
+      rg.get({url:'http://localhost:5001/faulty?faulty=false', cacheKey: 'memory-faulty-2', cacheTTL: 10000}, function(err, response) {
+        rg.get({url:'cache', cacheKey:'memory-faulty-2', cacheTTL: 10000}, function(err, response) {
+            expect(response.statusCode).to.be(200);
+            expect(response.content).to.be('Faulty service managed to serve good content!');
+            done();
+        });
       });
   });
 
@@ -328,7 +330,7 @@ describe("Reliable Get", function() {
       var config = {cache:{engine:'redis'}};
       var rg = new ReliableGet(config);
       rg.get({url:'http://localhost:5001/set-cookie?faulty=false', cacheKey: 'redis-set-cookie', cacheTTL: 200}, function(err, response) {
-          expect(response.headers['set-cookie']).to.contain('test=bob');
+          expect(response.headers).to.not.contain('set-cookie');
           expect(response.statusCode).to.be(200);
           rg.get({url:'http://localhost:5001/set-cookie?faulty=true', cacheKey: 'redis-set-cookie', cacheTTL: 200}, function(err, response) {
             expect(response.headers).to.not.contain('set-cookie');
@@ -350,5 +352,3 @@ describe("Reliable Get", function() {
     });
   });
 });
-
-

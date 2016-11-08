@@ -1,20 +1,30 @@
 'use strict';
 
-var request = require('request');
-var sf = require('sf');
-var url = require('url');
 var util = require('util');
-var _ = require('lodash');
-var utils = require('./lib/utils');
 var EventEmitter = require('events').EventEmitter;
-var CacheFactory = require('./lib/cache/cacheFactory');
+
+var compose = require('async-deco/utils/compose');
+var getCacheDecorator = require('async-deco/callback/cache');
+var getFallbackCacheDecorator = require('async-deco/callback/fallback-cache');
+var getDedupeDecorator = require('async-deco/callback/dedupe');
+var getLogDecorator = require('async-deco/callback/log');
+var addLogger = require('async-deco/utils/add-logger');
+var sanitizeAsyncFunction = require('async-deco/utils/sanitizeAsyncFunction');
+
+var cacheFactory = require('./lib/cache/cacheFactory');
+var utils = require('./lib/utils');
+var getRequest = require('./lib/getRequest');
+
 var statusCodeToErrorLevelMap = {'3': 'info', '4': 'warn', '5': 'error' };
 
 function ReliableGet(config) {
-
-    var cache = CacheFactory.getCache(config.cache);
-
     config = config || {};
+
+    var cache = cacheFactory(config);
+    var cacheDecorator = getCacheDecorator(cache);
+    var fallbackDecorator = getFallbackCacheDecorator(cache, {noPush: true, useStale: true});
+    var dedupeDecorator = getDedupeDecorator(utils.getCacheKey(config));
+
     config.requestOpts = config.requestOpts || { agent: false };
     config.requestOpts.followRedirect = config.requestOpts.followRedirect !== false; // make falsey values true
 
@@ -23,146 +33,94 @@ function ReliableGet(config) {
         config.requestOpts.followRedirect = false;
     }
 
-    var requestWithDefault = request.defaults(config.requestOpts);
+    var req = getRequest(config);
 
-    this.get = function(options, next) {
+    this.get = function (options, next) {
+        var self = this;
+        var cacheError = false;
+        var fallbackCacheHit = false;
+        var fallbackCacheStale = false;
+        var deduped = false;
+        var error;
 
-        var self = this,
-            start = Date.now(),
-            hasCacheControl = function(res, value) {
-                return (res.headers['cache-control'] || '').indexOf(value) !== -1;
-            };
-
-        // Defaults
-        options.headers = options.headers || config.headers || {};
-        options.cacheKey = options.cacheKey || utils.urlToCacheKey(options.url);
-        options.cacheTTL = options.hasOwnProperty('cacheTTL') ? options.cacheTTL : 60000;
-        options.timeout = options.hasOwnProperty('timeout') ? options.timeout : 5000;
-
-        var pipeAndCacheContent = function(cb) {
-
-            var content = '', start = Date.now(), inErrorState = false, res;
-
-            function handleError(err, statusCode, headers) {
-                if (!inErrorState) {
-                    inErrorState = true;
-                    var message = sf('Service {url} responded with {errorMessage}', {
-                        url: options.url,
-                        errorMessage: err.message
-                    });
-                    var statusGroup = '' + Math.floor(statusCode / 100);
-                    var errorLevel = statusCodeToErrorLevelMap[statusGroup] || 'error';
-                    var errorMessage = (errorLevel === 'error' ? 'FAIL ' + message : message);
-                    self.emit('log', errorLevel, errorMessage, {tracer:options.tracer, statusCode: statusCode, type:options.type});
-                    self.emit('stat', 'increment', options.statsdKey + '.requestError');
-                    cb({statusCode: statusCode || 500, message: message, headers: headers});
-                }
+        var realTimingStart, realTimingEnd;
+        var logDecorator = getLogDecorator();
+        var logger = addLogger(function (evt, payload, ts) {
+            var result, err, statusGroup, errorLevel, errorMessage;
+            if (evt === 'cache-error') {
+                cacheError = true;
             }
+            else if (evt === 'log-start') {
+                realTimingStart = ts;
+            }
+            else if (evt === 'log-end') {
+                realTimingEnd = ts;
+                result = payload.result;
+                self.emit('log', 'debug', 'OK ' + options.url, {tracer:options.tracer, responseTime: realTimingEnd - realTimingStart, type:options.type});
+                self.emit('stat', 'timing', options.statsdKey + '.responseTime', realTimingEnd - realTimingStart);
+            }
+            else if (evt === 'log-error') {
+                err = payload.err;
+                statusGroup = '' + Math.floor(err.statusCode / 100);
+                errorLevel = statusCodeToErrorLevelMap[statusGroup] || 'error';
+                errorMessage = (errorLevel === 'error' ? 'FAIL ' + err.message : err.message);
+                self.emit('log', errorLevel, errorMessage, {tracer:options.tracer, statusCode: err.statusCode, type:options.type});
+                self.emit('stat', 'increment', options.statsdKey + '.requestError');
+            }
+            else if (evt === 'cache-hit') {
+                result = payload.result.hit;
+                self.emit('log','debug', 'CACHE HIT for key: ' + payload.key, {tracer:options.tracer, responseTime: payload.timing, type: options.type});
+                self.emit('stat', 'increment', options.statsdKey + '.cacheHit');
+            }
+            else if (evt === 'cache-miss') {
+                self.emit('log', 'debug', 'CACHE MISS for key: ' + payload.key, {tracer:options.tracer, type: options.type});
+                self.emit('stat', 'increment', options.statsdKey + '.cacheMiss');
+            }
+            else if (evt === 'cache-set') {
+                self.emit('log','debug', 'CACHE SET for key: ' + payload.key + ' @ TTL: ' + utils.getCacheValidity(payload.args, payload.res), {tracer:options.tracer,type: options.type});
+            }
+            else if (evt === 'fallback-cache-hit') {
+                fallbackCacheStale = payload.result.stale;
+                fallbackCacheHit = true;
+                error = payload.actualResult.err;
+                self.emit('log', 'debug', 'Serving stale cache for key: ' + payload.key, {tracer: options.tracer, type: options.type});
+                self.emit('stat', 'increment', options.statsdKey + '.cacheStale');
+            }
+            else if (evt === 'fallback-cache-miss') {
+                self.emit('log', 'warn', 'Error and no stale cache available for key: ' + payload.key, {tracer: options.tracer, type: options.type});
+                self.emit('stat', 'increment', options.statsdKey + '.cacheNoStale');
+            }
+            else if (evt === 'dedupe-queue') {
+                deduped = true;
+                self.emit('log', 'debug', 'Deduped: ' + payload.key, {tracer: options.tracer, type: options.type});
+                self.emit('stat', 'increment', options.statsdKey + '.dedupe-queue');
+            }
+        });
 
-            if(!url.parse(options.url).protocol && options.url !== 'cache') { return handleError({message:'Invalid URL ' + options.url}); }
+        var decorator = compose([
+            logger,
+            logDecorator,
+            fallbackDecorator,
+            cacheDecorator,
+            dedupeDecorator,
+            sanitizeAsyncFunction
+        ]);
 
-            options.headers.accept = options.headers.accept || 'text/html,application/xhtml+xml,application/xml,application/json';
-            options.headers['user-agent'] = options.headers['user-agent'] || 'Reliable-Get-Request-Agent';
-
-            requestWithDefault({ url: options.url, timeout: options.timeout, headers: options.headers })
-                .on('error', handleError)
-                .on('data', function(data) {
-                    content += data.toString();
-                })
-                .on('response', function(response) {
-                    res = response;
-                    if(response.statusCode != 200) {
-                        handleError({message:'status code ' + response.statusCode}, response.statusCode, response.headers);
-                    }
-                })
-                .on('end', function() {
-                    if(inErrorState) { return; }
-                    res.content = content;
-                    res.timing = Date.now() - start;
-                    cb(null, res);
-                    self.emit('log', 'debug', 'OK ' + options.url, {tracer:options.tracer, responseTime: res.timing, type:options.type});
-                    self.emit('stat', 'timing', options.statsdKey + '.responseTime', res.timing);
-                });
-
-        }
-
-        var getWithNoCache = function() {
-            pipeAndCacheContent(function(err, res) {
-                if(err) { return next(err); }
-                res.headers = res.headers || {};
-                if (!hasCacheControl(res, 'no-cache') || !hasCacheControl(res, 'no-store')) {
+        return decorator(req)(options, function (err, res) {
+            if (res) {
+                if (fallbackCacheHit && fallbackCacheStale) {
+                    err = error;
+                    res.stale = true;
+                }
+                if (cacheError) {
                     res.headers['cache-control'] = 'no-cache, no-store, must-revalidate';
                 }
-                next(null, {statusCode: res.statusCode, content: res.content, headers: res.headers, timing: res.timing});
-            });
-        }
-
-        if(!options.explicitNoCache && options.cacheTTL > 0) {
-
-            cache.get(options.cacheKey, function(err, cacheData, oldCacheData) {
-
-                if (err) { return getWithNoCache(); }
-                if (cacheData && cacheData.content) {
-                    var timing = Date.now() - start;
-                    self.emit('log','debug', 'CACHE HIT for key: ' + options.cacheKey,{tracer:options.tracer, responseTime: timing, type:options.type});
-                    self.emit('stat', 'increment', options.statsdKey + '.cacheHit');
-                    next(null, {statusCode: 200, content: cacheData.content, headers: cacheData.headers, timing: timing});
-                    return;
-                }
-
-                self.emit('log', 'debug', 'CACHE MISS for key: ' + options.cacheKey,{tracer:options.tracer, type:options.type});
-                self.emit('stat', 'increment', options.statsdKey + '.cacheMiss');
-
-                if(options.url == 'cache') {
-                    next(null, {content: 'No content in cache at key: ' + options.cacheKey, statusCode: 404});
-                    return;
-                }
-
-                pipeAndCacheContent(function(err, res) {
-
-                    if (err) {
-                        var staleContent = oldCacheData ? _.extend(oldCacheData, {stale: true}) : undefined;
-                        if (oldCacheData) {
-                            self.emit('log', 'debug', 'Serving stale cache for key: ' + options.cacheKey, {tracer: options.tracer, type: options.type});
-                            self.emit('stat', 'increment', options.statsdKey + '.cacheStale');
-                        } else {
-                            if(cache.engine !== 'nocache') {
-                                self.emit('log', 'warn', 'Error and no stale cache available for key: ' + options.cacheKey, {tracer: options.tracer, type: options.type});
-                                self.emit('stat', 'increment', options.statsdKey + '.cacheNoStale');
-                            }
-                        }
-                        return next(err, staleContent);
-                    }
-
-                    if (hasCacheControl(res, 'no-cache') || hasCacheControl(res, 'no-store')) {
-                        next(null, {statusCode: 200, content: res.content, headers: res.headers});
-                        return;
-                    }
-                    if (hasCacheControl(res, 'max-age')) {
-                        options.cacheTTL = res.headers['cache-control'].split('=')[1] * 1000;
-                    }
-
-                    cache.set(options.cacheKey, {content: res.content, headers: res.headers, options: options}, options.cacheTTL, function() {
-                        next(null, {statusCode: 200, content: res.content, headers:res.headers, timing: res.timing});
-                        self.emit('log','debug', 'CACHE SET for key: ' + options.cacheKey + ' @ TTL: ' + options.cacheTTL,{tracer:options.tracer,type:options.type});
-                    });
-
-                });
-
-            });
-
-        } else {
-
-            getWithNoCache();
-
-        }
-
+                res.deduped = deduped;
+                res.realTiming = realTimingEnd - realTimingStart;
+            }
+            next(err, res);
+        });
     }
-
-    this.disconnect = function() {
-        if(cache.disconnect) { cache.disconnect(); }
-    }
-
 }
 
 util.inherits(ReliableGet, EventEmitter);
