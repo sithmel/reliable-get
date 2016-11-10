@@ -61,6 +61,8 @@ Property|Description|Example / Default|Required
 ---------|----------|-------------|-------
 cache.engine|Cache to use, redis/memorycache/nocache|nocache|No
 cache.engine.url|URL to redis|localhost:6379|No
+cache.compress|Use snappy compression|false|No
+cache.namespace|Prefix for redis keys|''|No
 
 ## GET options
 
