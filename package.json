@@ -1,6 +1,6 @@
 {
   "name": "reliable-get",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A circuit breaker and cached wrapper for GET requests (enables reliable external service interaction).",
   "main": "index.js",
   "scripts": {
