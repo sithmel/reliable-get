@@ -1,5 +1,6 @@
 var ReliableGet = require('..');
-var config = {cache:{engine:'nocache'}};
+// var config = {cache:{engine:'nocache'}};
+var config = {cache:{engine:'redis'}, compress: true};
 var rg = new ReliableGet(config);
 var async = require('async');
 var fs = require('fs');
@@ -79,12 +80,12 @@ function initialise() {
     fireLotsOfRequests(function() {
       setTimeout(function() {
         stub.kill('SIGHUP');
-        rg.disconnect();
+        process.exit();
+
+//        rg.disconnect();
       }, 5000);
     });
   })
 }
 
 initialise();
-
-

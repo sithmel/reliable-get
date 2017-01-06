@@ -24,9 +24,18 @@ function memoryPerSecond() {
 }
 
 function heapPerMinute() {
+  try {
+    global.gc();
+  } catch (e) {
+    console.log('You must run program with "node --expose-gc index.js"');
+    process.exit();
+  }
+  var heapUsed = process.memoryUsage().heapUsed;
+  console.log('Program is using ' + heapUsed + ' bytes of Heap.')
   heapdump.writeSnapshot('./pc-' + Date.now() + '.heapsnapshot');
   setTimeout(heapPerMinute, 60000);
 }
 
 memoryPerSecond();
-heapPerMinute();
+setTimeout(heapPerMinute, 10000);
+// heapPerMinute();

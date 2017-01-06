@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "lint": "jshint .",
-    "test": "istanbul cover _mocha -- -R spec tests/* && istanbul check-coverage -t 95"
+    "test": "istanbul cover _mocha -- -R spec tests/* && istanbul check-coverage -t 95",
+    "soak": "node --expose-gc benchmark/soak.js"
   },
   "repository": {
     "type": "git",
