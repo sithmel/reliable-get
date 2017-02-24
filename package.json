@@ -1,6 +1,6 @@
 {
   "name": "reliable-get",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A circuit breaker and cached wrapper for GET requests (enables reliable external service interaction).",
   "main": "index.js",
   "scripts": {
@@ -23,7 +23,7 @@
   },
   "homepage": "https://github.com/tes/reliable-get",
   "dependencies": {
-    "async-deco": "^7.0.3",
+    "async-deco": "^7.0.4",
     "body-parser": "^1.6.7",
     "cache-manager": "^2.0.1",
     "cache-manager-redis": "^0.2.2",
