@@ -28,6 +28,20 @@ function initStubServer(port, next) {
             }, 100);
         }
 
+        var isFaulty = false;
+        var toggleFaultyFn = function(req, res) {
+             setTimeout(function() {
+                if(!isFaulty) {
+                    res.writeHead(200, {'Content-Type': 'text/html'});
+                    res.end('Faulty service managed to serve good content!');
+                } else {
+                    res.writeHead(500, {'Content-Type': 'text/html'});
+                    res.end('Faulty service broken');
+                }
+                isFaulty = !isFaulty;
+            }, 100);
+        }
+
         router.get('/', function(req, res) {
             res.end('OK');
         });
@@ -68,6 +82,7 @@ function initStubServer(port, next) {
         })
 
         router.get('/faulty', faultyFn);
+        router.get('/toggle-faulty', toggleFaultyFn);
         router.get('/cb-faulty', faultyFn);
         router.get('/cb-faulty-default', faultyFn);
 

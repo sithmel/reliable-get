@@ -25,7 +25,6 @@ function ReliableGet(config) {
     var fallbackDecorator = getFallbackCacheDecorator(cache, {noPush: true, useStale: true});
     var dedupeDecorator = getDedupeDecorator(utils.getCacheKey(config));
 
-
     config.requestOpts = config.requestOpts || { agent: false };
     config.requestOpts.gzip = true;
     config.requestOpts.followRedirect = config.requestOpts.followRedirect !== false; // make falsey values true
