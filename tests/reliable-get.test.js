@@ -164,7 +164,7 @@ describe("Reliable Get", function() {
       });
   });
 
-  it.only('MEMORY CACHE: should initialise with caching off if no cache key provided', function(done) {
+  it('MEMORY CACHE: should initialise with caching off if no cache key provided', function(done) {
       var config = {cache:{engine:'memorycache'}};
       var rg = new ReliableGet(config);
       rg.get({url:'http://localhost:' + TEST_SERVER_PORT + '/toggle-faulty'}, function(err, response) {
