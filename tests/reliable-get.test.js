@@ -164,16 +164,14 @@ describe("Reliable Get", function() {
       });
   });
 
-
-  it('MEMORY CACHE: should initialise with caching on with simple defaults if none provided', function(done) {
+  it.only('MEMORY CACHE: should initialise with caching off if no cache key provided', function(done) {
       var config = {cache:{engine:'memorycache'}};
       var rg = new ReliableGet(config);
-      rg.get({url:'http://localhost:' + TEST_SERVER_PORT + '/faulty?faulty=false'}, function(err, response) {
+      rg.get({url:'http://localhost:' + TEST_SERVER_PORT + '/toggle-faulty'}, function(err, response) {
           expect(err).to.be(null);
           expect(response.statusCode).to.be(200);
-          rg.get({url:'http://localhost:' + TEST_SERVER_PORT + '/faulty?faulty=false'}, function(err, response) {
-            expect(err).to.be(null);
-            expect(response.statusCode).to.be(200);
+          rg.get({url:'http://localhost:' + TEST_SERVER_PORT + '/toggle-faulty'}, function(err, response) {
+            expect(err.statusCode).to.be(500);
             done();
           });
       });
