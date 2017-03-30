@@ -61,7 +61,9 @@ describe("Reliable Get", function() {
       var rg = new ReliableGet(config);
       rg.get({url:'http://localhost:' + TEST_SERVER_PORT + '/faulty?faulty=false', cacheKey:'__error__'}, function(err, response) {
           expect(err).to.be(null);
-          expect(response.headers['cache-control']).to.be('no-cache, no-store, must-revalidate');
+          expect(response.headers['cache-control']).to.be('private, s-maxage=0, no-cache, no-store, must-revalidate, max-age=0');
+          expect(response.headers['pragma']).to.be('no-cache');
+          expect(response.headers['expires']).to.be('0');
           expect(response.statusCode).to.be(200);
           done();
       });

@@ -114,7 +114,9 @@ function ReliableGet(config) {
                     res.stale = true;
                 }
                 if (cacheError) {
-                    res.headers['cache-control'] = 'no-cache, no-store, must-revalidate';
+                    res.headers['cache-control'] = 'private, s-maxage=0, no-cache, no-store, must-revalidate, max-age=0';
+                    res.headers.expires = '0';
+                    res.headers.pragma = 'no-cache';
                 }
                 res.deduped = deduped;
                 res.realTiming = realTimingEnd - realTimingStart;
