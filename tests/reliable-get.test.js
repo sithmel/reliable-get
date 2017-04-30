@@ -282,6 +282,62 @@ describe("Reliable Get", function() {
       });
   });
 
+  describe('MEMCACHED CACHE', function() {
+    var config = {cache:{engine:'memcached'}};
+    var rg = new ReliableGet(config);
+
+    it('should serve from cache after initial request', function(done) {
+      rg.get({url:'http://localhost:' + TEST_SERVER_PORT + '/faulty?faulty=false', cacheKey: 'redis-faulty-1', cacheTTL: 200}, function(err, response) {
+        expect(err).to.be(null);
+        expect(response.statusCode).to.be(200);
+        rg.get({url:'http://localhost:' + TEST_SERVER_PORT + '/faulty?faulty=true', cacheKey: 'redis-faulty-1', cacheTTL: 200}, function(err, response) {
+          expect(err).to.be(null);
+          expect(response.statusCode).to.be(200);
+          done();
+        });
+      });
+    });
+
+    it('should serve cached content if it calls a service that breaks after a successful request', function(done) {
+        rg.get({url:'http://localhost:' + TEST_SERVER_PORT + '/faulty?faulty=false', cacheKey: 'redis-faulty-2', cacheTTL: 200}, function(err, response) {
+            expect(err).to.be(null);
+            expect(response.statusCode).to.be(200);
+            rg.get({url:'http://localhost:' + TEST_SERVER_PORT + '/faulty?faulty=true', cacheKey: 'redis-faulty-2', cacheTTL: 200}, function(err, response) {
+              expect(err).to.be(null);
+              expect(response.statusCode).to.be(200);
+              done();
+            });
+        });
+    });
+
+    it('should serve stale content if it calls a service that breaks after a successful request and ttl expired', function(done) {
+        rg.get({url:'http://localhost:' + TEST_SERVER_PORT + '/faulty?faulty=false', cacheKey: 'redis-faulty-3', cacheTTL: 200}, function(err, response) {
+            expect(err).to.be(null);
+            expect(response.statusCode).to.be(200);
+            setTimeout(function() {
+              rg.get({url:'http://localhost:' + TEST_SERVER_PORT + '/faulty?faulty=true', cacheKey: 'redis-faulty-3', cacheTTL: 200}, function(err, response) {
+                expect(err.statusCode).to.be(500);
+                expect(response.content).to.be('Faulty service managed to serve good content!');
+                expect(response.stale).to.be(true);
+                done();
+              });
+            }, 500);
+        });
+    });
+
+    it('should not serve cached set-cookie headers if it calls a service that breaks after a successful request', function(done) {
+        rg.get({url:'http://localhost:' + TEST_SERVER_PORT + '/set-cookie?faulty=false', cacheKey: 'redis-set-cookie', cacheTTL: 200}, function(err, response) {
+            expect(response.headers).to.not.contain('set-cookie');
+            expect(response.statusCode).to.be(200);
+            rg.get({url:'http://localhost:' + TEST_SERVER_PORT + '/set-cookie?faulty=true', cacheKey: 'redis-set-cookie', cacheTTL: 200}, function(err, response) {
+              expect(response.headers).to.not.contain('set-cookie');
+              expect(response.statusCode).to.be(200);
+              done();
+            });
+        });
+    });
+  });
+
   it('REDIS CACHE: should serve from cache after initial request', function(done) {
       var config = {cache:{engine:'redis'}};
       var rg = new ReliableGet(config);

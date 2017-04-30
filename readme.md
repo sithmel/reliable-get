@@ -59,10 +59,12 @@ var config = {
 
 Property|Description|Example / Default|Required
 ---------|----------|-------------|-------
-cache.engine|Cache to use, redis/memorycache/nocache|nocache|No
+cache.engine|Cache to use, redis/memcached/memorycache/nocache|nocache|No
 cache.engine.url|URL to redis|localhost:6379|No
 cache.compress|Use snappy compression|false|No
 cache.namespace|Prefix for redis keys|''|No
+cache.hosts|Array of host:port combinations for memcached|[]|No
+cache.autodiscover|Use Elasticache Auto Discovery|false|No
 
 ## GET options
 
@@ -122,10 +124,12 @@ Configuration
 Cache configuration
 -------------------
 The cache object accept any config value accepted by redis. It also takes:
-* config.cache.engine: nocache, memorycache, redis (use nocache/memorycache for testing only!)
+* config.cache.engine: nocache, memorycache, memcached, redis (use nocache/memorycache for testing only!)
 * config.cache.url: redis dsn, it is translated to the connection parameters
 * config.cache.compress: enable snappy compression on cached items
 * config.cache.namespace: adds this string as a prefix to any key. Useful to share redis with other services or migrations
+* config.cache.hosts: Memcached cluster nodes addresses as `<host>:<port>` combinartions in an array
+* config.cache.autodiscover: enable AWS Elasticache Auto Discovery of Memcached cache cluster nodes
 
 Request Configuration
 ---------------------
