@@ -26,6 +26,7 @@
     "async-deco": "^7.0.4",
     "body-parser": "^1.6.7",
     "cache-manager": "^2.0.1",
+    "cache-manager-memcached-store": "^2.1.0",
     "cache-manager-redis": "^0.2.2",
     "connect-route": "^0.1.4",
     "hogan.js": "^3.0.2",
