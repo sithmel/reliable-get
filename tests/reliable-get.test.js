@@ -25,6 +25,17 @@ describe("Reliable Get", function() {
       });
   });
 
+  it('OPTIONS OBJECT: should fully pass OPTIONS object down to the request', function (done) {
+      var config = {cache: {engine: 'nocache'}};
+      var rg = new ReliableGet(config);
+      rg.get({url: 'http://localhost:' + TEST_SERVER_PORT, qs: { 'key': 'value' } }, function (err, response) {
+          expect(err).to.be(null);
+          expect(response.statusCode).to.be(200);
+          expect(response.request.uri.query).to.be('key=value');
+          done();
+      });
+  });
+
   it('NO CACHE: should fail with an invalid url', function(done) {
       var config = {cache:{engine:'nocache'}};
       var rg = new ReliableGet(config);
