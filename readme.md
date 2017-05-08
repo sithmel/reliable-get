@@ -118,6 +118,8 @@ var options = {
   }
 ```
 
+The `options` object is fully passed down to the request.
+
 Configuration
 =============
 
