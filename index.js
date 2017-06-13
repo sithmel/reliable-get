@@ -15,7 +15,8 @@ var cacheFactory = require('./lib/cache/cacheFactory');
 var utils = require('./lib/utils');
 var getRequest = require('./lib/getRequest');
 
-var statusCodeToErrorLevelMap = {'3': 'info', '4': 'warn', '5': 'error' };
+var statusCodeToErrorLevelMap = {'2': 'debug', '3': 'info', '4': 'warn', '5': 'error' };
+var statusCodeToMessage = {'2': 'OK', '3': '', '4': '', '5': 'FAIL' };
 
 function ReliableGet(config) {
     config = config || {};
@@ -57,15 +58,20 @@ function ReliableGet(config) {
             else if (evt === 'log-end') {
                 realTimingEnd = ts;
                 result = payload.result;
-                self.emit('log', 'debug', 'OK ' + options.url, {tracer:options.tracer, responseTime: realTimingEnd - realTimingStart, type:options.type});
+
+                statusGroup = '' + Math.floor(result.statusCode / 100);
+                errorLevel = statusCodeToErrorLevelMap[statusGroup] || 'error';
+                errorMessage = typeof statusCodeToMessage[statusGroup] === 'undefined' ? 'FAIL' : statusCodeToMessage[statusGroup];
+                errorMessage += ' Service ' + options.url + ' responded with status code ' + result.statusCode;
+
+                self.emit('log', errorLevel, errorMessage, {tracer:options.tracer, responseTime: realTimingEnd - realTimingStart, type:options.type});
                 self.emit('stat', 'timing', options.statsdKey + '.responseTime', options.statsdTags, realTimingEnd - realTimingStart);
             }
             else if (evt === 'log-error') {
                 err = payload.err;
-                statusGroup = '' + Math.floor(err.statusCode / 100);
-                errorLevel = statusCodeToErrorLevelMap[statusGroup] || 'error';
-                errorMessage = (errorLevel === 'error' ? 'FAIL ' + err.message : err.message);
-                self.emit('log', errorLevel, errorMessage, {tracer:options.tracer, statusCode: err.statusCode, type:options.type});
+                errorMessage = 'FAIL ' + err.message;
+
+                self.emit('log', 'error', errorMessage, {tracer:options.tracer, statusCode: err.statusCode, type:options.type});
                 self.emit('stat', 'increment', options.statsdKey + '.requestError', options.statsdTags);
             }
             else if (evt === 'cache-hit') {

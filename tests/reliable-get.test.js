@@ -116,8 +116,8 @@ describe("Reliable Get", function() {
       var rg = new ReliableGet(config);
 
       rg.get({url:'http://localhost:' + TEST_SERVER_PORT + '/302'}, function(err, response) {
-          expect(err.statusCode).to.be(302);
-          expect(err.headers.location).to.be('/');
+          expect(response.statusCode).to.be(302);
+          expect(response.headers.location).to.be('/');
           done();
       });
   });
@@ -152,13 +152,14 @@ describe("Reliable Get", function() {
       var config = { cache: { engine:'nocache' }, requestOpts: { followRedirect: false }};
       var rg = new ReliableGet(config);
       rg.on('log', function(level, message) {
+        console.log(message, level)
         if (level === 'warn') {
           expect(message).to.contain('with status code 404');
           done();
         }
       });
       rg.get({url:'http://localhost:' + TEST_SERVER_PORT + '/404', explicitNoCache: true}, function(err, response) {
-          expect(err.statusCode).to.be(404);
+          expect(response.statusCode).to.be(404);
       });
   });
 
@@ -172,8 +173,8 @@ describe("Reliable Get", function() {
         }
       });
       rg.get({url:'http://localhost:' + TEST_SERVER_PORT + '/302'}, function(err, response) {
-          expect(err.statusCode).to.be(302);
-          expect(err.headers.location).to.be('/');
+          expect(response.statusCode).to.be(302);
+          expect(response.headers.location).to.be('/');
       });
   });
 
@@ -290,6 +291,20 @@ describe("Reliable Get", function() {
               done();
             });
           }, 500);
+      });
+  });
+
+  it('MEMORY CACHE: consider 404 not an error', function(done) {
+      var config = {cache:{engine:'memorycache'}, throwOnStatusCodes: /5../};
+      var rg = new ReliableGet(config);
+        rg.get({url:'http://localhost:' + TEST_SERVER_PORT, cacheKey: '404-1', cacheTTL: 0}, function(err, response) {
+          expect(err).to.be(null);
+          expect(response.statusCode).to.be(200);
+            rg.get({url:'http://localhost:' + TEST_SERVER_PORT + '/404', cacheKey: '404-1', cacheTTL: 200}, function(err, response) {
+            expect(response.statusCode).to.be(404);
+            expect(err).to.be(null);
+            done();
+          });
       });
   });
 
@@ -413,8 +428,8 @@ describe("Reliable Get", function() {
         var config = { cache: { engine:'nocache' }, followRedirect: false };
         var rg = new ReliableGet(config);
         rg.get({url:'http://localhost:' + TEST_SERVER_PORT + '/302'}, function(err, response) {
-            expect(err.statusCode).to.be(302);
-            expect(err.headers.location).to.be('/');
+            expect(response.statusCode).to.be(302);
+            expect(response.headers.location).to.be('/');
             done();
         });
     });
