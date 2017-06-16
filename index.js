@@ -15,15 +15,14 @@ var cacheFactory = require('./lib/cache/cacheFactory');
 var utils = require('./lib/utils');
 var getRequest = require('./lib/getRequest');
 
-var statusCodeToErrorLevelMap = {'2': 'debug', '3': 'info', '4': 'warn', '5': 'error' };
-var statusCodeToMessage = {'2': 'OK', '3': '', '4': '', '5': 'FAIL' };
+var statusCodeToErrorLevelMap = {'3': 'info', '4': 'warn', '5': 'error' };
 
 function ReliableGet(config) {
     config = config || {};
 
     var cache = cacheFactory(config);
-    var cacheDecorator = getCacheDecorator(cache);
-    var fallbackDecorator = getFallbackCacheDecorator(cache, {noPush: true, useStale: true});
+    var cacheDecorator = getCacheDecorator(cache, { error: utils.isError });
+    var fallbackDecorator = getFallbackCacheDecorator(cache, {noPush: true, useStale: true, error: utils.isError});
     var dedupeDecorator = getDedupeDecorator(utils.getCacheKey(config));
 
     config.requestOpts = config.requestOpts || { agent: false };
@@ -59,19 +58,14 @@ function ReliableGet(config) {
                 realTimingEnd = ts;
                 result = payload.result;
 
-                statusGroup = '' + Math.floor(result.statusCode / 100);
-                errorLevel = statusCodeToErrorLevelMap[statusGroup] || 'error';
-                errorMessage = typeof statusCodeToMessage[statusGroup] === 'undefined' ? 'FAIL' : statusCodeToMessage[statusGroup];
-                errorMessage += ' Service ' + options.url + ' responded with status code ' + result.statusCode;
-
-                self.emit('log', errorLevel, errorMessage, {tracer:options.tracer, responseTime: realTimingEnd - realTimingStart, type:options.type});
-                self.emit('stat', 'timing', options.statsdKey + '.responseTime', options.statsdTags, realTimingEnd - realTimingStart);
+                self.emit('log', 'debug', 'OK ' + options.url, {tracer:options.tracer, responseTime: realTimingEnd - realTimingStart, type:options.type});
             }
             else if (evt === 'log-error') {
                 err = payload.err;
-                errorMessage = 'FAIL ' + err.message;
-
-                self.emit('log', 'error', errorMessage, {tracer:options.tracer, statusCode: err.statusCode, type:options.type});
+                statusGroup = '' + Math.floor(err.statusCode / 100);
+                errorLevel = statusCodeToErrorLevelMap[statusGroup] || 'error';
+                errorMessage = (errorLevel === 'error' ? 'FAIL ' + err.message : err.message);
+                self.emit('log', errorLevel, errorMessage, {tracer:options.tracer, statusCode: err.statusCode, type:options.type});
                 self.emit('stat', 'increment', options.statsdKey + '.requestError', options.statsdTags);
             }
             else if (evt === 'cache-hit') {
