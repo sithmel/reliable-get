@@ -59,6 +59,7 @@ function ReliableGet(config) {
                 result = payload.result;
 
                 self.emit('log', 'debug', 'OK ' + options.url, {tracer:options.tracer, responseTime: realTimingEnd - realTimingStart, type:options.type});
+                self.emit('stat', 'timing', options.statsdKey + '.responseTime', options.statsdTags, realTimingEnd - realTimingStart);
             }
             else if (evt === 'log-error') {
                 err = payload.err;
