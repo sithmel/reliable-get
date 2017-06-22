@@ -43,7 +43,7 @@ function ReliableGet(config) {
         var fallbackCacheStale = false;
         var deduped = false;
         var error;
-
+        var onLog = options.onLog || function () {};
         var realTimingStart, realTimingEnd;
         var logDecorator = getLogDecorator();
         var logger = addLogger(function (evt, payload, ts) {
@@ -97,6 +97,7 @@ function ReliableGet(config) {
                 self.emit('log', 'debug', 'Deduped: ' + payload.key, {tracer: options.tracer, type: options.type});
                 self.emit('stat', 'increment', options.statsdKey + '.dedupe-queue', options.statsdTags);
             }
+            onLog(evt, payload, ts);
         });
 
         var decorator = compose([
