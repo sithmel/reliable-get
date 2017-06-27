@@ -23,7 +23,7 @@
   },
   "homepage": "https://github.com/tes/reliable-get",
   "dependencies": {
-    "async-deco": "^7.2.1",
+    "async-deco": "^7.6.0",
     "body-parser": "^1.6.7",
     "cache-manager": "^2.0.1",
     "cache-manager-memcached-store": "^2.1.0",

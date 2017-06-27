@@ -45,7 +45,8 @@ function ReliableGet(config) {
         var error;
         var onLog = options.onLog || function () {};
         var realTimingStart, realTimingEnd;
-        var logDecorator = getLogDecorator();
+        var outerLogDecorator = getLogDecorator();
+        var innerLogDecorator = getLogDecorator('request-');
         var logger = addLogger(function (evt, payload, ts) {
             var result, err, statusGroup, errorLevel, errorMessage;
             if (evt === 'cache-error') {
@@ -102,11 +103,12 @@ function ReliableGet(config) {
 
         var decorator = compose([
             logger,
-            logDecorator,
-            fallbackDecorator,
-            cacheDecorator,
-            dedupeDecorator,
-            sanitizeAsyncFunction
+            outerLogDecorator, // this logs begin and and of the whole thing
+            fallbackDecorator, // fallback on stale cache
+            cacheDecorator, // cache
+            dedupeDecorator, // dedupe: let another function, calling the callback of this
+            innerLogDecorator, // this logs begin and and of the request
+            sanitizeAsyncFunction // prevent double callback and other issues tricky to debug
         ]);
 
         return decorator(req)(options, function (err, res) {
