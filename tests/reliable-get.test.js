@@ -309,7 +309,7 @@ describe("Reliable Get", function() {
       });
   });
 
-  describe.skip('MEMCACHED CACHE', function() {
+  describe('MEMCACHED CACHE', function() {
     var config = {cache:{engine:'memcached'}};
     var rg = new ReliableGet(config);
 
