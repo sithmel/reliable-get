@@ -42,6 +42,7 @@ function ReliableGet(config) {
         var fallbackCacheHit = false;
         var fallbackCacheStale = false;
         var deduped = false;
+        var cached = false;
         var error;
         var onLog = options.onLog || function () {};
         var realTimingStart, realTimingEnd;
@@ -72,6 +73,7 @@ function ReliableGet(config) {
             }
             else if (evt === 'cache-hit') {
                 result = payload.result.hit;
+                cached = true;
                 self.emit('log','debug', 'CACHE HIT for key: ' + payload.key, {tracer:options.tracer, responseTime: payload.timing, type: options.type});
                 self.emit('stat', 'increment', options.statsdKey + '.cacheHit', options.statsdTags);
             }
@@ -122,6 +124,7 @@ function ReliableGet(config) {
                     res.headers.expires = '0';
                     res.headers.pragma = 'no-cache';
                 }
+                res.cached = cached;
                 res.deduped = deduped;
                 res.realTiming = realTimingEnd - realTimingStart;
             }
