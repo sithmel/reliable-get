@@ -48,6 +48,7 @@ function ReliableGet(config) {
         var realTimingStart, realTimingEnd;
         var outerLogDecorator = getLogDecorator();
         var innerLogDecorator = getLogDecorator('request-');
+        var initialTime;
         var logger = addLogger(function (evt, payload, ts) {
             var result, err, statusGroup, errorLevel, errorMessage;
             if (evt === 'cache-error') {
@@ -100,7 +101,8 @@ function ReliableGet(config) {
                 self.emit('log', 'debug', 'Deduped: ' + payload.key, {tracer: options.tracer, type: options.type});
                 self.emit('stat', 'increment', options.statsdKey + '.dedupe-queue', options.statsdTags);
             }
-            onLog(evt, payload, ts);
+            initialTime = initialTime || ts;
+            onLog(evt, payload, ts - initialTime);
         });
 
         var decorator = compose([
