@@ -21,6 +21,7 @@ describe("Reliable Get", function() {
       rg.get({url:'http://localhost:' + TEST_SERVER_PORT}, function(err, response) {
           expect(err).to.be(null);
           expect(response.statusCode).to.be(200);
+          expect(response.realTiming).to.be.ok();
           done();
       });
   });
@@ -199,6 +200,8 @@ describe("Reliable Get", function() {
           rg.get({url:'http://localhost:' + TEST_SERVER_PORT + '/faulty?faulty=false', cacheKey: 'memory-faulty-1', cacheTTL: 200}, function(err, response) {
             expect(err).to.be(null);
             expect(response.statusCode).to.be(200);
+            expect(response.cached).to.be(true);
+            expect(response.realTiming).to.be.ok();
             done();
           });
       });
@@ -213,6 +216,7 @@ describe("Reliable Get", function() {
           rg.get({url:'http://localhost:' + TEST_SERVER_PORT + '/faulty?faulty=true', cacheKey: 'memory-faulty-2', cacheTTL: 10000}, function(err, response) {
             expect(err).to.be(null);
             expect(response.statusCode).to.be(200);
+            expect(response.cached).to.be(true);
             done();
           });
       });
@@ -253,6 +257,7 @@ describe("Reliable Get", function() {
       rg.get({url:'cache', cacheKey:'invalid-key', cacheTTL: 10000}, function(err, response) {
           expect(response.statusCode).to.be(404);
           expect(response.content).to.be('No content in cache at key: invalid-key');
+          expect(response.cached).to.be(false);
           done();
       });
   });
@@ -320,6 +325,8 @@ describe("Reliable Get", function() {
         rg.get({url:'http://localhost:' + TEST_SERVER_PORT + '/faulty?faulty=true', cacheKey: 'redis-faulty-1', cacheTTL: 200}, function(err, response) {
           expect(err).to.be(null);
           expect(response.statusCode).to.be(200);
+          expect(response.cached).to.be(true);
+          expect(response.realTiming).to.be.ok();
           done();
         });
       });
@@ -332,6 +339,7 @@ describe("Reliable Get", function() {
             rg.get({url:'http://localhost:' + TEST_SERVER_PORT + '/faulty?faulty=true', cacheKey: 'redis-faulty-2', cacheTTL: 200}, function(err, response) {
               expect(err).to.be(null);
               expect(response.statusCode).to.be(200);
+              expect(response.cached).to.be(true);
               done();
             });
         });
@@ -374,6 +382,8 @@ describe("Reliable Get", function() {
           rg.get({url:'http://localhost:' + TEST_SERVER_PORT + '/faulty?faulty=true', cacheKey: 'redis-faulty-1', cacheTTL: 200}, function(err, response) {
             expect(err).to.be(null);
             expect(response.statusCode).to.be(200);
+            expect(response.cached).to.be(true);
+            expect(response.realTiming).to.be.ok();
             done();
           });
       });
@@ -388,6 +398,7 @@ describe("Reliable Get", function() {
           rg.get({url:'http://localhost:' + TEST_SERVER_PORT + '/faulty?faulty=true', cacheKey: 'redis-faulty-2', cacheTTL: 200}, function(err, response) {
             expect(err).to.be(null);
             expect(response.statusCode).to.be(200);
+            expect(response.cached).to.be(true);
             done();
           });
       });

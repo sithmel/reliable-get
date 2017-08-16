@@ -120,6 +120,12 @@ var options = {
 
 The `options` object is fully passed down to the request.
 
+## Response fields
+The library will decorate with response with some useful keys that you may need to use, there are following:
+- `stale` - is added to response when the request to origin failed and a stale cached version is returned instead
+- `cached` - is `true` if there was a cache hit, otherwise `false`
+- `realTiming` - show the time it took for the response to be returned
+
 Configuration
 =============
 
