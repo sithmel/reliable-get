@@ -81,6 +81,7 @@ Property|Description|Example / Default|Required
 url|Service to get|http://my-service.tes.co.uk|Yes
 timeout|Timeout for service|5000|No
 cacheKey|Key to store cached value against|my-service_tes_co_uk|No
+tags|List of tags (surrogate keys)|[]|No
 cacheTTL|TTL of cached value in ms|1 minute (60000)|No
 explicitNoCache|Do not cache under any circumstances|false|No
 headers|Headers to send with request||No
@@ -93,13 +94,13 @@ Example from a Compoxure backend request:
 
 ```js
 var options = {
-          url: targetUrl,
-          cacheKey: targetCacheKey,
-          cacheTTL: targetCacheTTL,
-          timeout: utils.timeToMillis(backend.timeout || DEFAULT_LOW_TIMEOUT),
-          headers: backendHeaders,
-          tracer: req.tracer,
-          statsdKey: 'backend_' + utils.urlToCacheKey(host)
+  url: targetUrl,
+  cacheKey: targetCacheKey,
+  cacheTTL: targetCacheTTL,
+  timeout: utils.timeToMillis(backend.timeout || DEFAULT_LOW_TIMEOUT),
+  headers: backendHeaders,
+  tracer: req.tracer,
+  statsdKey: 'backend_' + utils.urlToCacheKey(host)
 };
 ```
 
@@ -107,15 +108,15 @@ From a compoxure fragment request:
 
 ```js
 var options = {
-      url: url,
-      timeout: timeout,
-      cacheKey: cacheKey,
-      cacheTTL: cacheTTL,
-      explicitNoCache: explicitNoCache,
-      headers: optionsHeaders,
-      tracer: req.tracer,
-      statsdKey: statsdKey
-  }
+  url: url,
+  timeout: timeout,
+  cacheKey: cacheKey,
+  cacheTTL: cacheTTL,
+  explicitNoCache: explicitNoCache,
+  headers: optionsHeaders,
+  tracer: req.tracer,
+  statsdKey: statsdKey
+};
 ```
 
 The `options` object is fully passed down to the request.
@@ -125,6 +126,10 @@ The library will decorate with response with some useful keys that you may need 
 - `stale` - is added to response when the request to origin failed and a stale cached version is returned instead
 - `cached` - is `true` if there was a cache hit, otherwise `false`
 - `realTiming` - show the time it took for the response to be returned
+
+Tags
+====
+Some store (memorycache/redis) supports assigning one or more tags to a certain resource. They are used only if the resource is cached, to purge all cache entries with the same tag.
 
 Configuration
 =============
