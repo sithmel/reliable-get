@@ -178,6 +178,21 @@ describe("Reliable Get", function() {
     });
   });
 
+  it('NO CACHE: should still pass through content on error', function(done) {
+      var config = { cache: { engine:'nocache' }, requestOpts: { followRedirect: false }};
+      var rg = new ReliableGet(config);
+      rg.on('log', function(level, message) {
+        if (level === 'warn') {
+          expect(message).to.contain('with status code 403');
+          done();
+        }
+      });
+      rg.get({url:'http://localhost:' + TEST_SERVER_PORT + '/403', explicitNoCache: true}, function(err, response) {
+          expect(err.statusCode).to.be(403);
+          expect(response.content).to.be('Some 403 content from server');
+      });
+  });
+
   it('MEMORY CACHE: should initialise with caching off if no cache key provided', function(done) {
     var config = {cache:{engine:'memorycache'}};
     var rg = new ReliableGet(config);
@@ -220,6 +235,22 @@ describe("Reliable Get", function() {
         done();
       });
     });
+  });
+
+  it('MEMORY CACHE: should serve a 200 if it calls a service that is not found after a successful request', function(done) {
+      var config = {cache:{engine:'memorycache'}};
+      var rg = new ReliableGet(config);
+      rg.get({url:'http://localhost:' + TEST_SERVER_PORT + '/notfound?notFound=false', cacheKey: 'memory-notfound-2', cacheTTL: 10000}, function(err, response) {
+          expect(err).to.be(null);
+          expect(response.statusCode).to.be(200);
+          setTimeout(function() {
+            rg.get({url:'http://localhost:' + TEST_SERVER_PORT + '/notfound?notFound=true', cacheKey: 'memory-notfound-2', cacheTTL: 10000}, function(err, response) {
+              expect(err).to.be(null);
+              expect(response.statusCode).to.be(200);
+              done();
+            });
+          }, 1);
+      });
   });
 
   it('MEMORY CACHE: should serve stale content if it calls a service that breaks after a successful request and ttl expired', function(done) {
@@ -307,7 +338,6 @@ describe("Reliable Get", function() {
       setTimeout(function () {
         rg.get({url:'http://localhost:' + TEST_SERVER_PORT + '/404', cacheKey: '404-1', cacheTTL: 200}, function(err, response) {
           expect(err.statusCode).to.be(404);
-          expect(response).to.be(undefined);
           done();
         }, 1000);
       });

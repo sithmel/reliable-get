@@ -11,7 +11,7 @@ function initStubServer(port, next) {
 
   var app = connect();
   var complexHtml = fs.readFileSync(__dirname + '/complex.html');
-  
+
   app.use(cookieParser());
 
   app.use('/middleware', cacheMiddleware({cache:{engine:'redis'}}));
@@ -58,6 +58,12 @@ function initStubServer(port, next) {
       res.end('' + Date.now());
     });
 
+    router.get('/notfound', function(req, res) {
+      var statusCode = req.originalUrl.indexOf('notFound=true') >= 0 ? 404 : 200;
+      res.writeHead(statusCode, {'Content-Type': 'text/html'});
+      res.end('Status: ' + statusCode);
+    });
+
     router.get('/nocachecustom', function(req, res) {
       res.writeHead(200, {'cache-control': 'no-cache, no-store, must-revalidate, private, max-stale=0, post-check=0, pre-check=0'});
       res.end('' + Date.now());
@@ -84,6 +90,11 @@ function initStubServer(port, next) {
       res.end('');
     })
 
+    router.get('/403', function(req, res) {
+      res.writeHead(403, {'Content-Type': 'text/html'});
+      res.end('Some 403 content from server');
+    })
+
     router.get('/faulty', faultyFn);
     router.get('/toggle-faulty', toggleFaultyFn);
     router.get('/cb-faulty', faultyFn);
@@ -101,7 +112,6 @@ function initStubServer(port, next) {
   }));
 
   app.listen(port).on('listening', next);
-
 }
 
 module.exports = {
