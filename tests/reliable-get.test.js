@@ -344,6 +344,26 @@ describe("Reliable Get", function() {
     });
   });
 
+  it('MEMORY CACHE: should never cache a 302', function(done) {
+    var config = {followRedirect: false, cache:{engine:'memorycache'}};
+    var rg = new ReliableGet(config);
+    rg.get({url:'http://localhost:' + TEST_SERVER_PORT + '/302', cacheKey: '302cached', cacheTTL: 500}, function(err, response) {
+      expect(err.statusCode).to.be(302);
+      expect(response.statusCode).to.be(302);
+      expect(response.cached).to.be(false);
+      var initialResponse = response.content;
+      setTimeout(function () {
+        rg.get({url:'http://localhost:' + TEST_SERVER_PORT + '/302', cacheKey: '302cached', cacheTTL: 500}, function(err, response) {
+          expect(err.statusCode).to.be(302);
+          expect(response.statusCode).to.be(302);
+          expect(response.content).not.to.be(initialResponse);
+          expect(response.cached).to.be(false);
+          done();
+        }, 100);
+      });
+    });
+  });
+
   describe('MEMCACHED CACHE', function() {
     var config = {cache:{engine:'memcached'}};
     var rg = new ReliableGet(config);

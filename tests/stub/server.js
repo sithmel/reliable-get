@@ -87,8 +87,8 @@ function initStubServer(port, next) {
 
     router.get('/302', function(req, res) {
       res.writeHead(302, {'location': '/'});
-      res.end('');
-    })
+      res.end('302 response: ' + Date.now());
+    });
 
     router.get('/403', function(req, res) {
       res.writeHead(403, {'Content-Type': 'text/html'});
