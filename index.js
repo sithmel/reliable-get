@@ -118,7 +118,7 @@ function ReliableGet(config) {
     ]);
 
     return decorator(req)(options, function (err, res) {
-      if (res && !err) {
+      if (res) {
         if (fallbackCacheHit && fallbackCacheStale) {
           err = error;
           res.stale = true;
