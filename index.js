@@ -22,7 +22,7 @@ function ReliableGet(config) {
 
   var cache = cacheFactory(config);
   var cacheDecorator = getCacheDecorator(cache, { error: utils.isError });
-  var fallbackDecorator = getFallbackCacheDecorator(cache, {noPush: true, useStale: true, error: utils.isError});
+  var fallbackDecorator = getFallbackCacheDecorator(cache, {noPush: true, useStale: true, error: utils.shouldFallback});
   var dedupeDecorator = getDedupeDecorator(utils.getCacheKey(config));
 
   config.requestOpts = config.requestOpts || { agent: false };
