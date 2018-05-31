@@ -32,8 +32,8 @@
     "hogan.js": "^3.0.2",
     "lodash": "~2.4.1",
     "memoize-cache": "^5.0.1",
-    "memoize-cache-manager": "^1.0.0",
-    "memoize-cache-redis": "^1.0.2",
+    "memoize-cache-manager": "^1.0.1",
+    "memoize-cache-redis": "^1.0.3",
     "memoize-cache-utils": "^0.1.1",
     "request": "^2.48.0",
     "sf": "^0.1.7"
