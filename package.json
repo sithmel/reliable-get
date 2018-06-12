@@ -46,7 +46,7 @@
     "heapdump": "^0.3.7",
     "istanbul": "^0.4.5",
     "jshint": "^2.5.6",
-    "mocha": "~1.18.2",
+    "mocha": "^5.2.0",
     "precommit-hook": "^1.0.7"
   },
   "pre-commit": [
