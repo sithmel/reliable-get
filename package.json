@@ -30,7 +30,7 @@
     "cache-manager-redis": "^0.2.2",
     "connect-route": "^0.1.4",
     "hogan.js": "^3.0.2",
-    "lodash": "~2.4.1",
+    "lodash": "^4.17.5",
     "memoize-cache": "^5.0.1",
     "memoize-cache-manager": "^1.0.1",
     "memoize-cache-redis": "^1.0.3",
