@@ -1,14 +1,13 @@
 language: node_js
 node_js:
-- '6.8'
-- '8.6'
+  - 'node'
+  - '6.8'
+  - '8.6'
+  - '10'
+  - '11'
 services:
-- memcached
-- redis-server
-notifications:
-  hipchat:
-    rooms:
-      secure: FZUOHDpKBfr/54WKT2epXAiRW5B6Tgpg9Bsfvuz5Mg1AOEkdE8kYBjeP9oUegJCUlsXvtO9VE3tf2fdI3hMKNc+yLXgvYDvsmjhTiVXk23of17zH2FTjFdbO/vm4SBSnh6wdg2qHGB8s2Y08uKADojRX6Vnznoy4d+k+nRaZrNA=
+  - memcached
+  - redis-server
 sudo: false
 env:
   - CC=clang CXX=clang++ npm_config_clang=1
