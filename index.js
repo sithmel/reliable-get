@@ -68,7 +68,7 @@ function ReliableGet(config) {
         err = payload.err;
         statusGroup = '' + Math.floor(err.statusCode / 100);
         errorLevel = statusCodeToErrorLevelMap[statusGroup] || 'error';
-        errorMessage = (errorLevel === 'error' ? 'FAIL ' + err.message : err.message);
+        errorMessage = (errorLevel === 'error' ? 'FAIL ' + err.message + ' URL: ' + options.url: err.message);
         self.emit('log', errorLevel, errorMessage, {tracer:options.tracer, statusCode: err.statusCode, type:options.type});
         self.emit('stat', 'increment', options.statsdKey + '.requestError', options.statsdTags);
       }
