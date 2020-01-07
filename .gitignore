@@ -13,3 +13,4 @@ node_modules
 manifest.json
 dump.rdb
 coverage
+package-lock.json
